@@ -59,3 +59,21 @@ describe('contextual lesson', () => {
     expect(suggestLesson({ ...ctx(days), settings })).toBeNull()
   })
 })
+
+describe('sources', () => {
+  it('every lesson source exists, every source is used, and links are https', async () => {
+    const { SOURCES, LIBRARY, sourceById } = await import('./sources')
+    const used = new Set<string>()
+    for (const l of LESSONS) for (const id of l.sources ?? []) {
+      expect(sourceById(id), `${l.id} -> ${id}`).toBeDefined()
+      used.add(id)
+    }
+    for (const g of LIBRARY) for (const id of g.ids) expect(sourceById(id), id).toBeDefined()
+    for (const s of SOURCES) {
+      expect(s.url.startsWith('https://'), s.id).toBe(true)
+      if (s.freeUrl) expect(s.freeUrl.startsWith('https://'), s.id).toBe(true)
+      expect(LIBRARY.some((g) => g.ids.includes(s.id)), `${s.id} in library`).toBe(true)
+    }
+    expect(LESSONS.filter((l) => !l.sources?.length).map((l) => l.id)).toEqual(['reading-data'])
+  })
+})

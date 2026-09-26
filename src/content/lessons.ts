@@ -9,6 +9,8 @@ export interface Lesson {
   /** One line shown in lists and on the contextual card. */
   summary: string
   body: string
+  /** Ids from sources.ts, shown as "Go deeper". */
+  sources?: string[]
 }
 
 export const LESSONS: Lesson[] = [
@@ -33,6 +35,7 @@ That last finding matters. Automaticity builds from the total number of repetiti
 - The 66-day target in this app is the median, not a promise. If it takes you longer, you're inside the normal range.
 
 The data this app collects is mostly about cues: which conditions (sleep, being alone, the phone) reliably come before the routine. Once you know the cues, you know where to intervene.`,
+    sources: ['lally2010', 'wood2016', 'neal2006'],
   },
   {
     id: 'replacement',
@@ -58,6 +61,7 @@ Suppose the cue is lying in bed at 23:00 with the phone, feeling restless. The o
 This app lets you name one replacement habit and counts the days since you started it, with 66 as the target. One is deliberate. Trying to install five new habits at once splits the repetitions you need for any of them to stick.
 
 Pick the one that answers your most common cue. Your Urges tab shows which trigger and which hours come up most; start there.`,
+    sources: ['wood2016', 'lally2010'],
   },
   {
     id: 'urge-surfing',
@@ -82,6 +86,7 @@ An urge feels like it will keep building until you do something. It doesn't. Urg
 The Panic button in this app is an urge-surfing timer. When the wave passes, tap "It passed" and it records how long it took. Over time you'll have your own average, and a count of urges you've ridden out.
 
 That count is the point. Being told urges pass is weak. Having a list of 30 that you personally watched pass is strong.`,
+    sources: ['bowen2009', 'bowen2014', 'brewerTed'],
   },
   {
     id: 'urge-anatomy',
@@ -112,6 +117,7 @@ Much of the urge is directed at a specific action: picking up the phone, opening
 ## Intensity is information
 
 When you log an urge in this app you rate its intensity. Over weeks, you may notice that average intensity drops even while urges still happen. That's progress a streak can't show: the same number of waves, but smaller ones.`,
+    sources: ['brewerTed', 'brewer2011', 'berridge2016'],
   },
   {
     id: 'if-then',
@@ -136,6 +142,7 @@ When you use a plan, tap "Used it." The count tells you which plans actually get
 ## When a plan fails
 
 That's information, not a verdict. Usually the "if" was too late (the urge was already strong) or the "then" was too hard to start. Move the "if" earlier in the chain, or make the "then" smaller.`,
+    sources: ['gollwitzer2006'],
   },
   {
     id: 'ave',
@@ -161,6 +168,7 @@ Put together, the conclusion is: "I've already failed, so it doesn't matter anym
 ## Why this app doesn't reset to zero
 
 A counter that drops from 30 to 0 after one setback does the AVE's work for it: it tells you everything is gone. It isn't. The 30 days happened, your brain did the repetitions, and your total clean days haven't gone anywhere. The streak exists in this app, but it's never the headline.`,
+    sources: ['witkiewitz2004', 'hendershot2011'],
   },
   {
     id: 'day-after',
@@ -187,6 +195,7 @@ Punishing yourself, making sweeping promises, or deciding to be perfect from now
 ## Your lapse protocol
 
 On a good day, write in the Plans tab what you want to do the day after a setback. This app shows it to you automatically, before anything else, whenever a setback is logged. The version of you who wrote it was thinking clearly; let them help.`,
+    sources: ['hendershot2011', 'witkiewitz2004'],
   },
   {
     id: 'environment',
@@ -214,6 +223,7 @@ Small obstacles have outsized effects on behaviour. Adding even a few seconds of
 Habits are tied to contexts. Holidays, new rooms, travel and schedule changes can weaken old cues (useful) or remove your usual supports (risky). Notice when your context changes and check whether your plans still fit.
 
 The Boundaries layer in this app is a list of environmental conditions. The Insights tab shows which of them, in your own data, are followed by setbacks most often. Start with the top one.`,
+    sources: ['wood2016', 'neal2006'],
   },
   {
     id: 'phone-in-bed',
@@ -237,6 +247,7 @@ The Boundaries layer in this app is a list of environmental conditions. The Insi
 ## Check it against your own data
 
 "Phone in bed" is one of your boundaries. After a few weeks the Insights tab will show your abstinence rate on days with and without it, same day and the next day. If the difference is large, you've found where to start. If it's small, your data is pointing somewhere else, and that's worth knowing too.`,
+    sources: ['irish2015', 'walker2009'],
   },
   {
     id: 'sleep',
@@ -262,6 +273,7 @@ This is why the Insights tab checks both same-day and next-day effects. A late n
 ## Read your own numbers
 
 After a few weeks of check-ins, look at "Not enough sleep" and "Sleep before midnight" in Insights. If the next-day difference is large, sleep may be the single most useful boundary to defend.`,
+    sources: ['yoo2007', 'walker2009', 'irish2015'],
   },
   {
     id: 'halt',
@@ -285,6 +297,7 @@ The check-in in this app includes an optional mood rating. Over time, mood trend
 ## Boredom, stress and relief
 
 Many urges are, underneath, a wish for relief from something: stress, boredom, sadness, a sense of emptiness at the end of a day. Naming what you want relief from ("I'm bored and restless", "that meeting wound me up") makes it easier to find another way to get it.`,
+    sources: ['walker2009', 'hawkley2010'],
   },
   {
     id: 'loneliness',
@@ -308,6 +321,7 @@ Being alone and being lonely are different. Some people are fine alone for a day
 ## Check your data
 
 If loneliness shows up often before urges or setbacks, it's worth making it the first boundary you plan for. Write an if-then plan for it: "If I notice I feel lonely, then I text one person or leave the house for 15 minutes."`,
+    sources: ['cacioppo2009', 'hawkley2010'],
   },
   {
     id: 'relapse-data',
@@ -317,7 +331,7 @@ If loneliness shows up often before urges or setbacks, it's worth making it the 
 
 ## What the research consistently shows
 
-- Lapses are common, including among people who go on to change the behaviour for good. Studies of smokers, for example, find that most successful quitters made several earlier attempts.
+- Lapses are common, including among people who go on to change the behaviour for good. A study following 1,277 smokers estimated, with its most careful method, that quitting for good took about 30 attempts on average. Older estimates of around 6 had left out the people who found it hardest.
 - Early periods are the most volatile. Risk tends to decrease the longer the new pattern is held, but it doesn't go to zero.
 - What predicts long-term outcome is less whether someone lapses and more what they do afterwards: whether a lapse becomes a relapse.
 
@@ -333,6 +347,7 @@ All four can improve while setbacks still happen. The Insights tab tracks the fi
 ## Risk windows
 
 Some people find their setbacks cluster at a particular distance from the previous one: day 10 to 16, say. The Today screen flags this if your data shows it. A known risk window is useful because you can plan for it, rather than being surprised by it.`,
+    sources: ['chaiton2016', 'witkiewitz2004', 'bouton2004'],
   },
   {
     id: 'rates',
@@ -358,6 +373,7 @@ The current streak is still there, as a small chip. It's real information. It ju
 ## Backfilling is fine
 
 Missed a check-in? Tap the day in the calendar and fill it in. The app marks it as backfilled for your own reference and otherwise treats it the same. An honest record with gaps filled in is worth more than a perfect-looking one.`,
+    sources: ['witkiewitz2004', 'chaiton2016'],
   },
   {
     id: 'shame',
@@ -381,6 +397,7 @@ In one study of people in recovery from alcohol use (Randles and Tracy, 2013), t
 ## In this app
 
 Nothing here is red. Setbacks show in a neutral grey. There are no broken chains or lost badges. That's deliberate: the app's job is to give you accurate information, not to punish you.`,
+    sources: ['randles2013', 'tangney2007', 'breines2012', 'neff'],
   },
   {
     id: 'reading-data',
@@ -434,6 +451,121 @@ ERP is usually done with a trained therapist, and for significant OCD that's str
 ## One difference
 
 With OCD, trying to argue with the intrusive thought or get certainty about it is itself a compulsion. The aim isn't to prove the doubt wrong. It's to let it be there and not act on it.`,
+    sources: ['hezel2019', 'nimhOcd'],
+  },
+  {
+    id: 'dopamine',
+    title: 'What dopamine actually does',
+    summary: "Not the pleasure chemical. It's the brain's prediction signal, and that explains a lot about urges.",
+    body: `Dopamine is usually described as the brain's pleasure chemical. The research tells a more useful story.
+
+## A prediction signal
+
+In the 1990s, Wolfram Schultz and colleagues recorded dopamine neurons in monkeys. When a reward arrived unexpectedly, the neurons fired. After the animal learned that a light predicted the reward, the neurons fired at the light instead, and barely at all when the expected reward arrived. When a predicted reward failed to show up, activity dipped below baseline.
+
+So dopamine tracks the difference between what you expected and what you got. It's a teaching signal: it tells the brain what to pay attention to and what to go after next time.
+
+## Why that matters for urges
+
+Through repetition, the cues that come before a habit (the phone in your hand, the hour, the empty flat) become predictors. They start the anticipation before anything has happened. An urge is, in large part, that prediction firing: the brain signalling that something rewarding is available right now.
+
+This is also why the pull is strongest around cues and weakest when they're absent, and why changing your environment works.
+
+## Tolerance and adaptation
+
+Brains adapt to strong, frequent reward. Research on drug addiction has found lasting changes in dopamine signalling and in the prefrontal systems that support self-control. The evidence for behaviours like pornography or gaming is less direct and still debated, so be careful with confident online claims about "fried receptors".
+
+## About "dopamine detox"
+
+You can't, and wouldn't want to, drain your brain of dopamine. What the idea gets right is simpler: less exposure to cues and to fast, intense rewards gives cue-triggered wanting a chance to weaken, and lets ordinary rewards compete again. That takes weeks of repetition, not a weekend.
+
+## What this means in practice
+
+- Expect urges near cues. They're predictions, not commands.
+- Each time a cue comes and goes without the old routine, the prediction is slightly less certain.
+- Old predictions don't vanish; they get outcompeted. See "Why urges come back".`,
+    sources: ['schultz1997', 'volkow2016', 'volkow2017', 'nida', 'lembke', 'huberman'],
+  },
+  {
+    id: 'wanting-liking',
+    title: 'Wanting is not liking',
+    summary: 'The brain systems for craving something and enjoying it are separate. Craving can grow while enjoyment fades.',
+    body: `Many people in recovery say something like: "I don't even enjoy it much anymore, but I still want it badly." That isn't a contradiction. It's one of the best-supported findings in addiction neuroscience.
+
+## Two different systems
+
+Kent Berridge and Terry Robinson spent decades separating two things we normally treat as one:
+
+- Wanting: the pull, the motivation to go and get something. Strongly driven by dopamine and triggered by cues.
+- Liking: the actual pleasure when you get it. Driven by smaller, separate brain systems.
+
+In everyday life they move together. With repeated exposure to a strong reward, they can come apart. Cue-triggered wanting can become stronger and more automatic (they call it incentive sensitization) while the liking stays the same or even declines.
+
+## Why this is useful to know
+
+- An urge is not evidence that you'll enjoy it. It's evidence that a cue fired.
+- The intensity of wanting says little about how much the thing will actually give you.
+- You can test this against your own experience. Judson Brewer's approach asks people to pay close attention to what the behaviour actually delivers, in detail. Many find the reality is flatter than the craving promised, and that noticing this weakens the pull over time.
+
+## A small exercise
+
+Next time you log an urge, add a note afterwards: on a scale of 1 to 10, how much did you want it, and (if you acted on it) how much did you actually enjoy it? Over a few weeks the gap between the two numbers is often striking, and it's your own evidence.`,
+    sources: ['berridge2016', 'brewerTed', 'brewer2011'],
+  },
+  {
+    id: 'extinction',
+    title: 'Why urges come back',
+    summary: "New learning covers old learning; it doesn't erase it. A return of old urges after a good stretch is normal.",
+    body: `After a good run, it can be alarming when strong urges return out of nowhere. It helps to know this is one of the most predictable things in the psychology of learning.
+
+## Extinction is new learning
+
+When a cue no longer leads to the old reward, the pull weakens. Psychologists call this extinction. Research by Mark Bouton and others shows extinction doesn't delete the old association. It adds a new one on top ("this cue no longer means that"), and the new learning is more fragile and more tied to context than the old.
+
+## So the old habit can return when
+
+- Time passes. An urge can reappear after weeks of quiet (spontaneous recovery).
+- The context changes. A holiday, a new flat or a new routine can bring the old pattern back, because the new learning was tied to the old context (renewal).
+- Stress hits, or you have one lapse, and the old pattern reactivates more strongly than you expected (reinstatement).
+
+## What to do with that
+
+- Don't read a returning urge as proof that nothing has changed. The new learning is still there; it's being tested.
+- Practise the new response in more than one context: at home, when travelling, when tired, when stressed. That makes the new learning more robust.
+- Expect risk around changes. Planning for a holiday or a stressful week in advance is realistic, not pessimistic.
+- Your data helps here. If Progress shows urges rising after a change in routine, that's exactly this effect.`,
+    sources: ['bouton2004', 'witkiewitz2004', 'hendershot2011'],
+  },
+  {
+    id: 'csbd',
+    title: 'Is it an addiction? What the research says',
+    summary: "Where science stands on compulsive sexual behaviour, and why your values matter to how it feels.",
+    body: `People who struggle with pornography or other sexual behaviours often wonder whether "addiction" is the right word. The research is more settled than it used to be, and also more nuanced.
+
+## What the WHO recognises
+
+Since ICD-11, the World Health Organization's diagnostic manual includes compulsive sexual behaviour disorder. It's classified as an impulse control disorder rather than an addiction. The core of it is a persistent pattern, over six months or more, of failing to control intense, repetitive sexual urges, so that the behaviour continues despite harm and despite repeated efforts to cut down, and causes marked distress or problems in life.
+
+The authors note one important boundary: distress that comes entirely from moral judgements or disapproval of the behaviour isn't, on its own, enough for the diagnosis.
+
+## The role of values
+
+Joshua Grubbs and colleagues reviewed many studies and found that feeling addicted to pornography is strongly linked to moral or religious disapproval of it, not only to how much someone actually watches.
+
+That does not mean the struggle is imaginary. It means two things are often going on at once:
+
+- the behaviour itself, with its habits, cues and urges, and
+- the conflict between the behaviour and what you believe in.
+
+Both are real. The second one tends to produce shame, and shame, as another lesson here covers, feeds the cycle rather than stopping it.
+
+## What this means for you
+
+- You get to decide what you want your life to look like. You don't need a diagnosis to want to change a habit.
+- The tools in this app (urge surfing, if-then plans, changing your environment, tracking the upstream conditions) work whatever label fits.
+- Living by your values and being gentle with yourself when you fall short aren't in conflict. The research suggests the second makes the first more likely.
+- If the distress is heavy, a therapist experienced with compulsive sexual behaviour can help, ideally one who takes your values seriously rather than dismissing them.`,
+    sources: ['kraus2018', 'grubbs2019', 'tangney2007'],
   },
 ]
 

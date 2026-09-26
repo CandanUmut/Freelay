@@ -19,9 +19,12 @@ describe('forward target', () => {
   it('always gives one concrete thing ahead', () => {
     expect(forwardTarget(st(0, 0), 0, DEFAULT_SETTINGS, TODAY).headline).toMatch(/Check in today/)
     expect(forwardTarget(st(13, 26), 20, DEFAULT_SETTINGS, TODAY).headline).toBe('14 days to beat your best (26).')
-    expect(forwardTarget(st(12, 26), 20, DEFAULT_SETTINGS, TODAY).headline).toBe('2 days to 14 in a row.')
+    expect(forwardTarget(st(12, 26), 20, DEFAULT_SETTINGS, TODAY).headline).toBe('Day 12. 2 more days to 14 in a row.')
+    // A 1-day "best" is not worth talking about.
+    expect(forwardTarget(st(1, 1), 1, DEFAULT_SETTINGS, TODAY).headline).toBe('Day 1. 2 more days to 3 in a row.')
+    expect(forwardTarget(st(0, 5), 9, DEFAULT_SETTINGS, TODAY, true).headline).toMatch(/starting tomorrow/)
     expect(forwardTarget(st(26, 26), 30, DEFAULT_SETTINGS, TODAY).headline).toMatch(/longest run/)
-    expect(forwardTarget(st(5, 40), 50, DEFAULT_SETTINGS, TODAY).headline).toBe('2 days to 7 in a row.')
+    expect(forwardTarget(st(5, 40), 50, DEFAULT_SETTINGS, TODAY).headline).toBe('Day 5. 2 more days to 7 in a row.')
     expect(forwardTarget(st(0, 40), 50, DEFAULT_SETTINGS, TODAY).headline).toMatch(/^3 clean days in a row/)
   })
   it('puts the replacement habit first when there is no streak yet', () => {

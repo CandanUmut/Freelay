@@ -238,6 +238,116 @@ function cleanRunFact(s: Snapshot): Insight | null {
   }
 }
 
+const RESIST_MILESTONES = [5, 10, 25, 50, 75, 100, 150, 200, 300, 500, 750, 1000]
+
+/** Short-lived: shown for two days after crossing a round number of resisted urges. */
+function resistedMilestone(s: Snapshot, dateOf: InsightOptions['dateOf']): Insight | null {
+  const resisted = s.urges.filter((u) => u.outcome === 'resisted').sort((a, b) => a.at.localeCompare(b.at))
+  for (let k = RESIST_MILESTONES.length - 1; k >= 0; k--) {
+    const m = RESIST_MILESTONES[k]!
+    const u = resisted[m - 1]
+    if (u && diffDays(dateOf(u), s.today) <= 1)
+      return {
+        id: `fact:resisted-${m}`,
+        kind: 'fact',
+        confidence: 'fact',
+        text: `That's ${m} urges resisted. ${m >= 50 ? 'Each one was a wave that passed without you acting on it.' : 'Every one of them counts.'}`,
+        score: 0.95,
+      }
+  }
+  return null
+}
+
+function selfcareConsistency(s: Snapshot): Insight | null {
+  const map = new Map(s.days.map((d) => [d.date, d]))
+  const dates = lastNDays(s.today, 14).filter((d) => map.has(d))
+  if (dates.length < 7) return null
+  let best: { item: TrackedItem; done: number } | null = null
+  for (const item of s.items) {
+    if (!item.active || item.layer !== 'selfcare' || item.target?.type === 'perWeek') continue
+    const done = dates.filter((d) => isHeld(item, map.get(d)?.entries[item.id]) === true).length
+    if (!best || done > best.done) best = { item, done }
+  }
+  if (!best || best.done / dates.length < 0.7) return null
+  return {
+    id: `fact:selfcare:${best.item.id}`,
+    kind: 'fact',
+    confidence: 'fact',
+    itemId: best.item.id,
+    text: `${best.item.name} on ${best.done} of the last ${dates.length} days you checked in: your most consistent self care.`,
+    score: 0.5,
+  }
+}
+
+const WEEKDAYS = ['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays']
+
+function weekdayFact(s: Snapshot, dateOf: InsightOptions['dateOf']): Insight | null {
+  const map = new Map(s.days.map((d) => [d.date, d]))
+  const dates = lastNDays(s.today, 56).filter((d) => map.has(d))
+  if (dates.length < 21) return null
+  const perDay = new Map<LocalDate, number>()
+  for (const u of s.urges) perDay.set(dateOf(u), (perDay.get(dateOf(u)) ?? 0) + 1)
+  const total = dates.reduce((a, d) => a + (perDay.get(d) ?? 0), 0)
+  if (total < 10) return null
+  let best: { wd: number; rate: number; n: number; other: number } | null = null
+  for (let wd = 0; wd < 7; wd++) {
+    const on = dates.filter((d) => weekdayOf(d) === wd)
+    const off = dates.filter((d) => weekdayOf(d) !== wd)
+    if (on.length < 3) continue
+    const rate = on.reduce((a, d) => a + (perDay.get(d) ?? 0), 0) / on.length
+    const other = off.reduce((a, d) => a + (perDay.get(d) ?? 0), 0) / off.length
+    if (!best || rate / Math.max(other, 0.05) > best.rate / Math.max(best.other, 0.05)) best = { wd, rate, n: on.length, other }
+  }
+  if (!best || best.rate / Math.max(best.other, 0.05) < 1.6) return null
+  return {
+    id: 'fact:weekday',
+    kind: 'fact',
+    confidence: 'fact',
+    text: `${WEEKDAYS[best.wd]} have been your heaviest day: ${fmt1(best.rate)} urges logged on average, against ${fmt1(best.other)} on other days.`,
+    detail: `Over the last ${best.n} ${WEEKDAYS[best.wd]!.toLowerCase()}. Worth a plan for that day.`,
+    score: 0.6,
+  }
+}
+
+function quietDays(s: Snapshot, dateOf: InsightOptions['dateOf']): Insight | null {
+  const map = new Map(s.days.map((d) => [d.date, d]))
+  const dates = lastNDays(s.today, 14).filter((d) => map.has(d))
+  if (dates.length < 7 || s.urges.length < 5) return null
+  const withUrges = new Set(s.urges.map(dateOf))
+  const quiet = dates.filter((d) => !withUrges.has(d)).length
+  if (quiet / dates.length < 0.5) return null
+  return {
+    id: 'fact:quiet',
+    kind: 'fact',
+    confidence: 'fact',
+    text: `No urges logged on ${quiet} of the last ${dates.length} days you checked in.`,
+    score: 0.4,
+  }
+}
+
+function urgeCountTrend(s: Snapshot, dateOf: InsightOptions['dateOf']): Insight | null {
+  const map = new Map(s.days.map((d) => [d.date, d]))
+  const count = (from: number, to: number) => {
+    const ds = lastNDays(addDays(s.today, -from), to - from).filter((d) => map.has(d))
+    const set = new Set(ds)
+    return { days: ds.length, urges: s.urges.filter((u) => set.has(dateOf(u))).length }
+  }
+  const a = count(0, 14)
+  const b = count(14, 28)
+  if (a.days < 7 || b.days < 7 || b.urges < 6) return null
+  const ra = a.urges / a.days
+  const rb = b.urges / b.days
+  if (ra > rb * 0.7) return null
+  return {
+    id: 'trend:urge-count',
+    kind: 'trend',
+    confidence: 'fact',
+    text: `You logged ${fmt1(ra)} urges a day over the last two weeks, down from ${fmt1(rb)}.`,
+    detail: 'Fewer urges, or fewer logged. Only you know which, but the first is common as a new routine settles in.',
+    score: 0.7,
+  }
+}
+
 // ---------------------------------------------------------------- urge factors
 
 export interface UrgeFactor {
@@ -481,8 +591,13 @@ export function buildInsights(s: Snapshot, o: InsightOptions): Insight[] {
   const list = [
     ...setbackFactorInsights(s, windowDays),
     ...urgeFactorInsights(s, o.dateOf, windowDays),
+    resistedMilestone(s, o.dateOf),
     resistTrend(s, o.dateOf),
     intensityTrend(s, o.dateOf),
+    urgeCountTrend(s, o.dateOf),
+    weekdayFact(s, o.dateOf),
+    selfcareConsistency(s),
+    quietDays(s, o.dateOf),
     boundaryTrend(s),
     durationFact(s.urges),
     hoursFact(recentUrges),
@@ -508,18 +623,24 @@ export function buildInsights(s: Snapshot, o: InsightOptions): Insight[] {
 }
 
 /**
- * One insight for Today. Prefers the highest-scoring one not shown in the
- * last few days, so the card changes rather than repeating itself.
+ * One insight for Today. Stable within a day. Otherwise the best-scoring
+ * insight not shown in the last `cooldown` days, with a bonus for how long
+ * it has been since it was shown (never shown counts as long ago), so every
+ * true thing gets its turn instead of the top three cycling.
  */
 export function pickInsight(list: Insight[], shown: Record<string, LocalDate>, today: LocalDate, cooldown = 3): Insight | null {
-  // Stable within a day: whatever was picked today stays.
   const already = list.find((i) => shown[i.id] === today)
   if (already) return already
+  const staleness = (i: Insight) => {
+    const d = shown[i.id]
+    return d ? Math.min(0.3, diffDays(d, today) * 0.02) : 0.3
+  }
   const fresh = list.filter((i) => {
     const d = shown[i.id]
     return !d || diffDays(d, today) >= cooldown
   })
-  return fresh[0] ?? list[0] ?? null
+  const pool = fresh.length ? fresh : list
+  return pool.reduce<Insight | null>((best, i) => (!best || i.score + staleness(i) > best.score + staleness(best) ? i : best), null)
 }
 
 // ---------------------------------------------------------------- pattern finder

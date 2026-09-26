@@ -22,7 +22,11 @@ export function Today() {
   const r30 = abstinenceRate(s)
   const st = streaks(s)
   const total = totalCleanDays(s)
-  const target = forwardTarget(st, s.days.length, settings, today)
+  // For people with frequent urges (OCD-type checking especially), resisting is the daily win the clean-day rate can't show.
+  const month = s.urges.filter((u) => diffDays(data.dateOf(u), today) < 30)
+  const urges30 = { total: month.length, resisted: month.filter((u) => u.outcome === 'resisted').length }
+  const absIdsForTarget = s.items.filter((i) => i.layer === 'abstinence').map((i) => i.id)
+  const target = forwardTarget(st, s.days.length, settings, today, dayOutcome(data.dayByDate.get(today), absIdsForTarget) === 'setback')
   const risk = riskText(riskWindow(s))
   const absIds = s.items.filter((i) => i.layer === 'abstinence').map((i) => i.id)
   const checkedIn = dayOutcome(data.dayByDate.get(today), absIds) !== undefined
@@ -64,6 +68,12 @@ export function Today() {
             <>
               clean over the last 30 days · {r30.clean} of {plural(r30.reported, 'reported day')}
               {r30.coverage < 0.9 && <>, {pct(r30.coverage)} reported</>}
+              {r30.coverage < 0.7 && r30.reported >= 7 && (
+                <span className="mt-1 block text-[14px]">
+                  With this many days missing, the rate is probably flattering: unrecorded days are often the harder ones. Missed days can be filled in from
+                  the calendar.
+                </span>
+              )}
             </>
           ) : (
             'clean over the last 30 days · nothing reported yet'
@@ -72,6 +82,11 @@ export function Today() {
         <p className="mt-3 text-lg">
           <span className="font-semibold tabular-nums">{total}</span> clean {total === 1 ? 'day' : 'days'} in total
         </p>
+        {urges30.total >= 3 && (
+          <p className="mt-1 text-lg">
+            <span className="font-semibold tabular-nums">{urges30.resisted}</span> of {urges30.total} urges resisted <span className="text-muted">this month</span>
+          </p>
+        )}
       </section>
 
       <Card className="mt-6">

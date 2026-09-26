@@ -25,20 +25,32 @@ function habitLine(h: { day: number; name: string }): string {
  * Always one concrete thing ahead. Prefers beating the personal best when it
  * is within two weeks, otherwise the next round-number run.
  */
-export function forwardTarget(st: Streaks, reportedDays: number, settings: Settings, today: LocalDate): ForwardTarget {
+export function forwardTarget(
+  st: Streaks,
+  reportedDays: number,
+  settings: Settings,
+  today: LocalDate,
+  todaySetback = false,
+): ForwardTarget {
   const habit = habitProgress(settings, today)
   const sub = habit ? habitLine(habit) : undefined
   if (reportedDays === 0) return { headline: 'Check in today to start your record.', sub }
 
   const { current, best } = st
   const nextMilestone = MILESTONES.find((m) => m > current) ?? current + 100
+  const gapToBest = best - current + 1
   let headline: string
-  if (current > 0 && current === best) headline = `Day ${current}, your longest run. Tomorrow sets a new best.`
-  else if (current > 0 && best - current + 1 <= 14) {
-    const gap = best - current + 1
-    headline = `${gap} ${gap === 1 ? 'day' : 'days'} to beat your best (${best}).`
-  } else if (current === 0) headline = `${nextMilestone} clean days in a row. It starts with today.`
-  else headline = `${nextMilestone - current} days to ${nextMilestone} in a row.`
+  if (current === 0)
+    headline = todaySetback
+      ? `${nextMilestone} clean days in a row, starting tomorrow. One day doesn't undo the rest.`
+      : `${nextMilestone} clean days in a row. It starts with today.`
+  // "Longest run" only means something once a run is a week or more.
+  else if (current === best && best >= 7) headline = `Day ${current}, your longest run. Tomorrow sets a new best.`
+  else if (best >= 7 && current < best && gapToBest <= 14) headline = `${gapToBest} ${gapToBest === 1 ? 'day' : 'days'} to beat your best (${best}).`
+  else {
+    const left = nextMilestone - current
+    headline = `Day ${current}. ${left} more ${left === 1 ? 'day' : 'days'} to ${nextMilestone} in a row.`
+  }
 
   // When there is no streak to speak of yet, the habit is the better target.
   if (habit && habit.day <= HABIT_DAYS && current < 3) return { headline: habitLine(habit), sub: headline }

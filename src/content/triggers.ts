@@ -53,6 +53,22 @@ const RULES: [string, Rule][] = [
     },
   ],
   [
+    'extinction',
+    (c) => {
+      const week = recentUrges(c, 7).length
+      const prior = recentUrges(c, 35).length - week
+      // A clear rise after a quieter stretch: at least double the weekly average of the 4 weeks before.
+      return prior >= 4 && week >= 4 && week >= (prior / 4) * 2 ? `${week} urges this week, about double your recent average.` : null
+    },
+  ],
+  [
+    'wanting-liking',
+    (c) => {
+      const acted = recentUrges(c, 30).filter((u) => u.outcome === 'acted' && u.intensity >= 7).length
+      return acted >= 2 ? `${acted} strong urges acted on this month. Worth knowing what the pull is and isn't.` : null
+    },
+  ],
+  [
     'sleep',
     (c) => {
       const u = urgesTagged(c, ['bnd-sleep'])
@@ -124,6 +140,7 @@ const RULES: [string, Rule][] = [
     (c) => (!c.settings.replacementHabit && c.s.days.length >= 7 ? 'A week of check-ins in. Time to name one replacement habit.' : null),
   ],
   ['rates', (c) => (c.s.days.length >= 1 && c.s.days.length <= 7 ? 'Why the headline number is a rate.' : null)],
+  ['dopamine', (c) => (c.s.urges.length >= 3 && c.s.days.length <= 21 ? `You've logged ${c.s.urges.length} urges. Here's what's behind them.` : null)],
 ]
 
 export interface Suggestion {
@@ -135,6 +152,10 @@ const DISMISS_DAYS = 7
 const READ_DAYS = 21
 
 export function suggestLesson(c: Ctx): Suggestion | null {
+  // Pace suggestions: after one is read or set aside, wait a day before the next,
+  // so the card is a nudge, not a feed.
+  const recent = (m: Record<string, LocalDate>) => Object.values(m).some((d) => diffDays(d, c.s.today) <= 1)
+  if (recent(c.meta.lessonsDismissed) || recent(c.meta.lessonsRead)) return null
   for (const [id, rule] of RULES) {
     const dismissed = c.meta.lessonsDismissed[id]
     if (dismissed && diffDays(dismissed, c.s.today) < DISMISS_DAYS) continue

@@ -105,7 +105,7 @@ export function simulate(p: Persona, engine: Engine, seed = 1, start: LocalDate 
       card,
       lesson: sug?.lesson.id ?? null,
       risk: riskText(riskWindow(morning)) !== null,
-      target: forwardTarget(st, reported.length, DEFAULT_SETTINGS, d.date).headline,
+      target: forwardTarget(st, reported.length, DEFAULT_SETTINGS, d.date, Boolean(d.entry && d.setback)).headline,
       review: engine !== 'baseline' && isReviewDay(s) && weekReview(s, dateOf) !== null,
       trueSetback: d.setback,
     })
