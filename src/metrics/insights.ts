@@ -348,6 +348,23 @@ function urgeCountTrend(s: Snapshot, dateOf: InsightOptions['dateOf']): Insight 
   }
 }
 
+/** Wanting (intensity beforehand) vs liking (enjoyment afterwards) for acted urges. */
+function wantingLiking(urges: Urge[]): Insight | null {
+  const rated = urges.filter((u) => u.outcome === 'acted' && typeof u.enjoyed === 'number')
+  if (rated.length < 3) return null
+  const want = rated.reduce((a, u) => a + u.intensity, 0) / rated.length
+  const like = rated.reduce((a, u) => a + u.enjoyed!, 0) / rated.length
+  if (want - like < 1.5) return null
+  return {
+    id: 'fact:wanting-liking',
+    kind: 'fact',
+    confidence: 'fact',
+    text: `The ${rated.length} urges you acted on and rated felt like ${fmt1(want)} out of 10 beforehand. You rated the enjoyment ${fmt1(like)} afterwards.`,
+    detail: 'Wanting and liking run on different systems in the brain. The pull promises more than it delivers.',
+    score: 0.8,
+  }
+}
+
 // ---------------------------------------------------------------- urge factors
 
 export interface UrgeFactor {
@@ -584,13 +601,34 @@ export function isReviewDay(s: Snapshot): boolean {
 
 // ---------------------------------------------------------------- assemble
 
-export function buildInsights(s: Snapshot, o: InsightOptions): Insight[] {
+/** Data as it stood at the end of an earlier day. */
+function asOf(s: Snapshot, date: LocalDate, dateOf: InsightOptions['dateOf']): Snapshot {
+  return { ...s, today: date, days: s.days.filter((d) => d.date <= date), urges: s.urges.filter((u) => dateOf(u) <= date) }
+}
+
+/**
+ * Factor claims that have held, pointing the same way, on each of the last
+ * `persistDays` days. The simulator showed false claims are mostly flickers
+ * lasting a few days while real patterns persist for weeks.
+ */
+function persistentClaims(s: Snapshot, o: InsightOptions, windowDays: number, persistDays: number): Insight[] {
+  const claimsFor = (snap: Snapshot) => [...setbackFactorInsights(snap, windowDays), ...urgeFactorInsights(snap, o.dateOf, windowDays)]
+  const now = claimsFor(s)
+  if (!now.length || persistDays <= 0) return now
+  let keep = now
+  for (let k = 1; k <= persistDays && keep.length; k++) {
+    const before = new Set(claimsFor(asOf(s, addDays(s.today, -k), o.dateOf)).map((c) => `${c.id}:${c.direction}`))
+    keep = keep.filter((c) => before.has(`${c.id}:${c.direction}`))
+  }
+  return keep
+}
+
+export function buildInsights(s: Snapshot, o: InsightOptions & { persistDays?: number }): Insight[] {
   const windowDays = o.windowDays ?? 60
   const recentUrges = s.urges.filter((u) => diffDays(o.dateOf(u), s.today) < windowDays)
   const items = new Map(s.items.map((i) => [i.id, i]))
   const list = [
-    ...setbackFactorInsights(s, windowDays),
-    ...urgeFactorInsights(s, o.dateOf, windowDays),
+    ...persistentClaims(s, o, windowDays, o.persistDays ?? 4),
     resistedMilestone(s, o.dateOf),
     resistTrend(s, o.dateOf),
     intensityTrend(s, o.dateOf),
@@ -600,6 +638,7 @@ export function buildInsights(s: Snapshot, o: InsightOptions): Insight[] {
     quietDays(s, o.dateOf),
     boundaryTrend(s),
     durationFact(s.urges),
+    wantingLiking(s.urges),
     hoursFact(recentUrges),
     triggerFact(recentUrges, items),
     resistedFact(recentUrges),

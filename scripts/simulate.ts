@@ -6,7 +6,7 @@ import { writeFileSync } from 'node:fs'
 import { PERSONAS } from '../src/sim/personas'
 import { summarize, type Engine, type Summary } from '../src/sim/run'
 
-const SEEDS = [1, 2, 3, 4, 5]
+const SEEDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 const mean = (xs: (number | null)[]) => {
   const v = xs.filter((x): x is number => x !== null)
   return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null

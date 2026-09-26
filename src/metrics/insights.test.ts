@@ -34,18 +34,31 @@ describe('insights from day one', () => {
   })
 })
 
+describe('wanting vs liking', () => {
+  it('reports the gap once three acted urges have an enjoyment rating', () => {
+    const urges = [1, 2, 3].map((n) => urge(addDays(TODAY, -n), n, { outcome: 'acted', intensity: 8, enjoyed: 4 }))
+    const f = buildInsights(snap([day(TODAY)], urges), { dateOf }).find((i) => i.id === 'fact:wanting-liking')
+    expect(f?.text).toBe('The 3 urges you acted on and rated felt like 8 out of 10 beforehand. You rated the enjoyment 4 afterwards.')
+    expect(buildInsights(snap([day(TODAY)], urges.slice(0, 2)), { dateOf }).some((i) => i.id === 'fact:wanting-liking')).toBe(false)
+  })
+})
+
 describe('urge factors', () => {
   it('detects a strong same-day effect and states it as urges per day', () => {
-    // Phone in bed every other day; 3 urges on those days, 0-1 otherwise, for 40 days.
-    const dates = lastNDays(TODAY, 40)
+    // Phone in bed every other day; 3 urges on those days, 0-1 otherwise, for 50 days
+    // (long enough for the pattern to have held on each of the last 5 days).
+    const dates = lastNDays(TODAY, 50)
     const days = dates.map((d, i) => day(d, { 'bnd-phone': i % 2 === 0 }))
     const urges = dates.flatMap((d, i) => (i % 2 === 0 ? [1, 2, 3].map((n) => urge(d, n)) : i % 4 === 1 ? [urge(d, 1)] : []))
     const f = urgeFactors(snap(days, urges), dateOf).find((x) => x.item.id === 'bnd-phone' && x.lag === 0)!
     expect(f.on.rate).toBe(3)
-    expect(f.off.rate).toBe(0.5)
+    expect(f.off.rate).toBeCloseTo(0.52, 1)
     const claim = buildInsights(snap(days, urges), { dateOf }).find((i) => i.id === 'urge:bnd-phone')!
     expect(claim.direction).toBe(1)
-    expect(claim.text).toBe('On days with phone in bed you logged 3 urges a day; without it, 0.5.')
+    expect(claim.text).toMatch(/^On days with phone in bed you logged 3 urges a day; without it, 0\.5\.$/)
+    // The same data cut off at day 40 is too new to have persisted.
+    const young = { ...snap(days.slice(-40), urges.filter((u) => dateOf(u) >= dates[10]!)) }
+    expect(buildInsights(young, { dateOf }).some((i) => i.id === 'urge:bnd-phone')).toBe(false)
   })
 
   it('drops a pattern that only exists in one half of the window', () => {

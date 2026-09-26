@@ -18,15 +18,31 @@ The app's main output is how the layers relate in your own data. For example: *"
 | **Log** | Logs an urge in three taps: intensity, outcome, save. Trigger, place and a note are optional. After saving it shows your resisted-urge count, this urge's intensity against your average, and the if-then plan for that trigger. An urge marked "acted on it" records a setback for that day and shows the lapse protocol first. |
 | **Progress** | • **Calendar** by layer, where tapping any day lets you view it or fill it in.<br>• **Insights**: ranked factors with strength labels, the 30-day rate trend per layer, and urge frequency, intensity and duration.<br>• **Urges**: a filtered list and an hour × weekday heatmap.<br>• **Timeline**: milestones, personal bests, and setbacks with what came before them. |
 | **Plans** | If-then plans linked to triggers, the lapse protocol (shown automatically after any setback), and the replacement habit. |
-| **Learn** | 17 short lessons with no order and nothing locked. |
+| **Learn** | 21 short lessons with no order and nothing locked, grouped by topic. They cover the brain and dopamine, urges, habits, sleep and loneliness, setbacks and shame, compulsive sexual behaviour and OCD. Each lesson ends with the research behind it, and there is a **Further reading** library of 30 papers, books and talks. Every source was checked when added: DOIs against Crossref, free full texts through Europe PMC, and web pages by fetching them. |
 
 **Panic** is a full-screen urge-surfing timer. When the urge passes, it records how long it lasted: *"That one lasted 9 minutes. Your average is 13. You have ridden out 24 urges."*
+
+## Insights from day one, tested by simulation
+
+Early on, the app shows only what is true by construction: facts and trends such as urges resisted, when urges cluster, how long timed urges lasted, week-over-week changes, the weekly review, and milestones. Claims about *what goes with what* come later and carry a label: early signal, likely pattern, or clear pattern.
+
+These rules were tuned with a simulator. It plays eight synthetic users with known ground truth through the app's real logic for 180 days each, and measures what the app said and how often it was wrong. See [docs/simulation-findings.md](docs/simulation-findings.md) for what changed and why, and [docs/simulation-report.md](docs/simulation-report.md) for the numbers.
+
+```sh
+npm run sim                                    # rerun the simulation and rewrite the report
+npx tsx scripts/diary.ts improver 1 30         # what Today shows one synthetic user, day by day
+```
 
 ## Honesty rules in the code
 
 - **The rate ignores unreported days, and coverage is shown next to it.** A 30-day rate counts only days you reported, so it could look better than it is if you skip bad days. The share of days reported is always displayed beside it.
-- **Factor comparisons need enough data.** A comparison is shown only with at least 8 days on each side *and* at least 5 setbacks in the 60-day window. With fewer setbacks, nearly every day is clean on both sides, so any difference comes down to one or two events.
-- **Every result gets a strength label.** The label is based on a two-proportion z-score, with strict thresholds because about 22 comparisons are run. The ranking puts strong results above weak ones. When everything is weak, the app says there is no clear pattern yet.
+- **Patterns must survive a strict test.** About 22 comparisons are re-run every day, so the bar is high:
+  - setback comparisons need at least 8 days on each side, at least 5 setbacks, and |z| ≥ 3
+  - urge comparisons use a dispersion-corrected test at |z| ≥ 3
+  - every pattern must point the same way in both halves of the 60-day window
+- **Weak results are not shown as findings.** They appear only in a collapsed list of raw comparisons.
+- **The risk window is a hazard test.** It is flagged only when setbacks really are at least 2× more likely at that point.
+- **Low coverage gets a warning.** When fewer than 70% of days are reported, Today says the rate is probably flattering.
 - **The check-in is the only record of a setback.** Logging an urge as "acted on it" writes the setback into that day's check-in, so the urge log and the check-in can't disagree.
 - **Archiving never rewrites history.** Items that have been used can only be archived, not deleted.
 

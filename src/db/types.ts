@@ -50,6 +50,8 @@ export interface Urge {
   outcome: 'resisted' | 'acted'
   durationMin?: number
   note?: string
+  /** For acted urges: how much it was actually enjoyed, 1-10, rated afterwards. */
+  enjoyed?: number
 }
 
 export interface Plan {
@@ -102,6 +104,9 @@ export interface Meta {
   insightsShown?: Record<string, LocalDate>
   /** Local date the weekly review was last dismissed. */
   reviewSeen?: LocalDate
+  /** Getting-started checklist: items reviewed, and whether the card was dismissed. */
+  itemsReviewed?: boolean
+  setupDismissed?: boolean
 }
 
 export const DEFAULT_META: Meta = { lessonsRead: {}, lessonsDismissed: {}, insightsShown: {} }

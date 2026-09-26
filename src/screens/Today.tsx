@@ -11,6 +11,7 @@ import { abstinenceRate, dayOutcome, layerRate, riskWindow, setbackDates, streak
 import { buildInsights, isReviewDay, patternProgress, pickInsight, weekReview } from '../metrics/insights'
 import { forwardTarget, riskText } from '../metrics/targets'
 import { InsightRow, WeekReviewCard } from '../ui/insight'
+import { GettingStarted } from './GettingStarted'
 import { IconChevron, IconLog, IconPen, IconSettings, IconWave } from '../ui/icons'
 import { Card, Label, LAYER, formatDate, pct, plural } from '../ui/kit'
 
@@ -143,6 +144,8 @@ export function Today() {
         <Action label="Journal" onClick={() => nav.push({ kind: 'journal' })} icon={<IconPen className="size-7" />} />
         <Action label="Panic" onClick={() => nav.push({ kind: 'panic' })} icon={<IconWave className="size-7" />} />
       </div>
+
+      <GettingStarted />
 
       {review && (
         <div className="mt-6">

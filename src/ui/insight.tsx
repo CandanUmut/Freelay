@@ -49,7 +49,7 @@ export function PatternFinder({ p }: { p: PatternProgress }) {
 function Delta({ now, then, better = 'up', fmt = (x: number) => String(x) }: { now: number; then: number | null | undefined; better?: 'up' | 'down'; fmt?: (x: number) => string }) {
   if (then === null || then === undefined) return null
   const d = now - then
-  if (Math.abs(d) < 1e-9) return <span className="text-muted"> · same as last week</span>
+  if (Math.abs(d) < 0.005) return <span className="text-muted"> · same as last week</span>
   const good = better === 'up' ? d > 0 : d < 0
   return (
     <span className={good ? 'text-selfcare-ink' : 'text-muted'}>
@@ -72,14 +72,15 @@ export function WeekReviewCard({ r, onDismiss }: { r: WeekReview; onDismiss?: ()
         </span>
       </div>
       <ul className="mt-3 space-y-2 text-[15px]">
+        {/* Compare rates, not counts: one fewer reported day or fewer urges isn't a worse week. */}
         <li>
-          <span className="font-semibold tabular-nums">{r.clean}</span> clean of {plural(r.reported, 'reported day')}
-          <Delta now={r.clean} then={p?.clean} />
+          <span className="font-semibold tabular-nums">{r.clean}</span> of {plural(r.reported, 'reported day')} clean
+          {p && p.reported > 0 && r.reported > 0 && <Delta now={r.clean / r.reported} then={p.clean / p.reported} fmt={pp} />}
         </li>
-        {r.urges > 0 && (
+        {(r.urges > 0 || (p && p.urges > 0)) && (
           <li>
-            <span className="font-semibold tabular-nums">{r.resisted}</span> of {plural(r.urges, 'urge')} resisted
-            <Delta now={r.resisted} then={p?.resisted} />
+            {plural(r.urges, 'urge')} logged, <span className="font-semibold tabular-nums">{r.resisted}</span> resisted
+            {p && <span className="text-muted"> · {p.urges} the week before</span>}
           </li>
         )}
         {r.boundaryHeld !== null && (

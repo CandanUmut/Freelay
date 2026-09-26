@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { addItem, deleteItem, itemIsUsed, moveItem, updateItem } from '../app/actions'
 import { useData } from '../app/data'
+import { db } from '../db/db'
+import { saveMeta } from '../db/seed'
 import { LAYERS, type Layer, type Target, type TrackedItem } from '../db/types'
 import { IconDown, IconPlus, IconUp } from '../ui/icons'
 import { Button, LayerTag, Screen } from '../ui/kit'
@@ -12,8 +14,12 @@ const HINT: Record<Layer, string> = {
 }
 
 export function ItemsEditor({ onClose }: { onClose: () => void }) {
-  const { items } = useData()
+  const { items, meta } = useData()
   const [open, setOpen] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!meta.itemsReviewed) void saveMeta(db, { itemsReviewed: true })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <Screen title="Tracked items" onClose={onClose} back>

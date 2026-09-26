@@ -348,6 +348,8 @@ export function generate(p: Persona, start: LocalDate, seed = 1): SimDay[] {
         triggerItemIds: triggers.filter(() => chance(0.6)).slice(0, 2),
         outcome: acted ? 'acted' : 'resisted',
         durationMin: !acted && chance(p.timedRate) ? Math.round(4 + rnd() * 20 * (1.2 - 0.5 * t)) : undefined,
+        // Most people who rate it report enjoying it less than the pull promised.
+        enjoyed: acted && chance(0.6) ? Math.max(1, Math.round(3 + rnd() * 4)) : undefined,
       })
     }
 

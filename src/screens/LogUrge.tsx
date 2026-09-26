@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { addUrge, markSetback, recordPlanUse } from '../app/actions'
+import { addUrge, markSetback, recordPlanUse, updateUrge } from '../app/actions'
 import { useData } from '../app/data'
 import { useNav } from '../app/nav'
 import type { Plan, Urge } from '../db/types'
@@ -237,6 +237,7 @@ function UrgeResult({ saved, onPanic, onDone }: { saved: Saved; onPanic: () => v
           <p className="mt-4 text-muted">You've resisted {plural(saved.resistedTotal, 'urge')} so far. Those still count.</p>
         </>
       )}
+      {!resisted && <EnjoyedRating urgeId={urge.id} wanted={urge.intensity} />}
       <p className="mt-2 text-muted">
         Intensity {urge.intensity}
         {cmp && saved.avgIntensity !== null && `, ${cmp} (${saved.avgIntensity.toFixed(1)})`}.
@@ -291,5 +292,32 @@ function UrgeResult({ saved, onPanic, onDone }: { saved: Saved; onPanic: () => v
         Done
       </Button>
     </div>
+  )
+}
+
+/** Optional, after acting on an urge: how much was it actually enjoyed? Feeds the wanting-vs-liking fact. */
+function EnjoyedRating({ urgeId, wanted }: { urgeId: string; wanted: number }) {
+  const [value, setValue] = useState<number | null>(null)
+  return (
+    <section className="mt-6 rounded-2xl bg-surface p-4">
+      <p className="leading-snug">It felt like {wanted === 8 ? "an" : "a"} {wanted} beforehand. How much did you actually enjoy it?</p>
+      <p className="mt-1 text-[13px] text-muted">Optional. Over time this shows the gap between wanting and liking.</p>
+      <div className="mt-3 grid grid-cols-5 gap-1.5">
+        {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+          <button
+            key={n}
+            type="button"
+            aria-pressed={value === n}
+            onClick={() => {
+              setValue(n)
+              void updateUrge(urgeId, { enjoyed: n })
+            }}
+            className={`min-h-11 rounded-xl tabular-nums ${value === n ? 'bg-ink font-semibold text-bg' : 'bg-surface-2'}`}
+          >
+            {n}
+          </button>
+        ))}
+      </div>
+    </section>
   )
 }
