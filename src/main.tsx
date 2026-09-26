@@ -22,7 +22,8 @@ const RELOCK_AFTER_MS = 60_000
 
 function Gate() {
   const { settings } = useData()
-  const [unlocked, setUnlocked] = useState(false)
+  // Locked at launch only if a PIN was already set; turning the PIN on doesn't lock you out mid-session.
+  const [unlocked, setUnlocked] = useState(() => !(settings.pinEnabled && settings.pinHash))
   const hiddenAt = useRef<number | null>(null)
 
   useEffect(() => {
