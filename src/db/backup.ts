@@ -47,7 +47,7 @@ const rowChecks: Record<TableName, (r: Record<string, unknown>) => boolean> = {
   urges: (r) => isStr(r.id) && isStr(r.at) && typeof r.intensity === 'number' && (r.outcome === 'resisted' || r.outcome === 'acted'),
   plans: (r) => isStr(r.id) && Array.isArray(r.triggerItemIds) && isStr(r.ifText) && isStr(r.thenText),
   journal: (r) => isStr(r.id) && isStr(r.at) && isStr(r.text),
-  kv: (r) => r.key === 'settings' || r.key === 'lapsePlan',
+  kv: (r) => (r.key === 'settings' || r.key === 'lapsePlan' || r.key === 'meta') && isObj(r.value),
 }
 
 /** Parse and validate an export file. Throws ImportError with a readable reason. */
@@ -99,14 +99,14 @@ export async function previewImport(db: LedgerDB, file: ExportFile): Promise<Imp
 /**
  * replace: wipe every table, then load the file.
  * merge:   upsert the file's rows; on the same key the file wins. Local settings
- *          are kept in merge mode, since they describe this device.
+ *          and meta are kept in merge mode, since they describe this device.
  */
 export async function applyImport(db: LedgerDB, file: ExportFile, mode: 'replace' | 'merge'): Promise<void> {
   await db.transaction('rw', TABLES.map((t) => db.table(t)), async () => {
     for (const t of TABLES) {
       let rows = file.tables[t] as unknown[]
       if (mode === 'replace') await db.table(t).clear()
-      if (mode === 'merge' && t === 'kv') rows = (rows as KvRow[]).filter((r) => r.key !== 'settings')
+      if (mode === 'merge' && t === 'kv') rows = (rows as KvRow[]).filter((r) => r.key !== 'settings' && r.key !== 'meta')
       await db.table(t).bulkPut(rows)
     }
   })

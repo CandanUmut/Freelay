@@ -129,11 +129,22 @@ describe('factor impact', () => {
   })
   it('labels a small difference as weak', () => {
     const days = lastNDays(TODAY, 40).map((d, i) =>
-      // prayer on even days; one setback in each arm -> ~0 difference
-      i === 2 || i === 3 ? setback(d, { 'sc-prayer': i % 2 === 0 }) : clean(d, { 'sc-prayer': i % 2 === 0 }),
+      // prayer on even days; three setbacks in each arm -> no difference
+      i < 6 ? setback(d, { 'sc-prayer': i % 2 === 0 }) : clean(d, { 'sc-prayer': i % 2 === 0 }),
     )
     const f = factorImpact(snap(days)).find((x) => x.item.id === 'sc-prayer')!
+    expect(f.sameDay.diff).toBe(0)
     expect(f.sameDay.strength).toBe('weak')
+  })
+  it('withholds a result until there are enough setbacks to compare', () => {
+    const days = lastNDays(TODAY, 40).map((d, i) =>
+      i < 2 ? setback(d, { 'sc-prayer': false }) : clean(d, { 'sc-prayer': i % 2 === 0 }),
+    )
+    const f = factorImpact(snap(days)).find((x) => x.item.id === 'sc-prayer')!
+    expect(f.sameDay.needed).toBe(0)
+    expect(f.sameDay.setbacks).toBe(2)
+    expect(f.sameDay.neededSetbacks).toBe(3)
+    expect(f.sameDay.diff).toBeNull()
   })
 })
 

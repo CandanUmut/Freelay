@@ -76,6 +76,8 @@ export interface Settings {
   dayBoundaryHour: number
   pinEnabled: boolean
   pinHash?: string
+  /** WebAuthn credential id (base64) used as a Face ID / Touch ID gate. */
+  biometricCredId?: string
   replacementHabit?: string
   habitStartDate?: LocalDate
   theme: 'dark'
@@ -87,7 +89,21 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: 'dark',
 }
 
-/** Singleton rows (settings, lapse plan) live in a key/value table. */
+/** Small app state that isn't user data proper but should survive a restore. */
+export interface Meta {
+  lastExportAt?: string
+  /** Lesson id -> local date it was opened. */
+  lessonsRead: Record<string, LocalDate>
+  /** Lesson id -> local date its contextual card was dismissed. */
+  lessonsDismissed: Record<string, LocalDate>
+  /** The setback date whose lapse protocol has been seen. */
+  lapseSeenFor?: LocalDate
+}
+
+export const DEFAULT_META: Meta = { lessonsRead: {}, lessonsDismissed: {} }
+
+/** Singleton rows (settings, lapse plan, meta) live in a key/value table. */
 export type KvRow =
   | { key: 'settings'; value: Settings }
   | { key: 'lapsePlan'; value: LapsePlan }
+  | { key: 'meta'; value: Meta }

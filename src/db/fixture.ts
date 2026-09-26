@@ -29,8 +29,10 @@ export interface Fixture {
  *  - sleep before midnight makes a short night much less likely
  *  - weekends are more often spent alone
  * About 7% of days are left unreported to exercise coverage and backfill.
+ * `riskScale` multiplies setback risk; tests use it to get enough setbacks
+ * for the factor engine to have something to measure.
  */
-export function buildFixture(today: LocalDate, days = 60, seed = 42): Fixture {
+export function buildFixture(today: LocalDate, days = 60, seed = 42, riskScale = 1): Fixture {
   const rnd = mulberry32(seed)
   const chance = (p: number) => rnd() < p
   const out: Fixture = { days: [], urges: [], plans: [], journal: [] }
@@ -51,7 +53,7 @@ export function buildFixture(today: LocalDate, days = 60, seed = 42): Fixture {
     if (phone) risk += 0.1
     if (lonely) risk += 0.1
     if (alone) risk += 0.05
-    const setback = chance(risk)
+    const setback = chance(risk * riskScale)
     shortNightYesterday = shortNight
 
     const unreported = chance(0.07)

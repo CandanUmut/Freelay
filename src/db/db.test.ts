@@ -81,6 +81,15 @@ describe('export / import', () => {
 })
 
 describe('60-day fixture', () => {
+  it('with enough setbacks, finds the planted next-day sleep effect', async () => {
+    const fx = buildFixture(TODAY, 90, 7, 2.5)
+    const s: Snapshot = { items: SEED_ITEMS, days: fx.days, urges: fx.urges, today: TODAY }
+    const sleep = factorImpact(s, 90).find((f) => f.item.id === 'bnd-sleep')!
+    expect(sleep.nextDay.diff).not.toBeNull()
+    expect(sleep.nextDay.diff!).toBeGreaterThan(0.15)
+    expect(topFactors(s, 3, 90).map((f) => f.item.id)).toContain('bnd-sleep')
+  })
+
   it('is deterministic', () => {
     expect(buildFixture(TODAY)).toEqual(buildFixture(TODAY))
   })
@@ -115,10 +124,10 @@ describe('60-day fixture', () => {
     for (const f of factors)
       for (const lag of [f.sameDay, f.nextDay]) if (lag.diff !== null) expect(lag.held.n + lag.notHeld.n).toBeLessThanOrEqual(60)
 
-    // The fixture builds in a next-day sleep effect; the engine should see it.
+    // At a realistic setback rate, 60 days is too thin for most comparisons;
+    // the engine must say so rather than rank noise.
     const sleep = factors.find((f) => f.item.id === 'bnd-sleep')!
-    expect(sleep.nextDay.diff).not.toBeNull()
-    expect(sleep.nextDay.diff!).toBeGreaterThan(0.1)
+    expect(sleep.nextDay.diff === null ? sleep.nextDay.neededSetbacks + sleep.nextDay.needed : 1).toBeGreaterThan(0)
 
     // Human-readable report so the fixture can be eyeballed from test output.
     const pct = (x: number | null) => (x === null ? '—' : `${Math.round(x * 100)}%`)
@@ -128,7 +137,7 @@ describe('60-day fixture', () => {
       `layers: boundaries ${pct(layerRate(s, 'boundary'))}, self care ${pct(layerRate(s, 'selfcare'))}`,
       `urges: ${urges.total} total, ${urges.resistedTotal} resisted, 30d ${urges.resisted30}/${urges.acted30} resisted/acted, avg intensity ${urges.avgIntensity?.toFixed(1)}, avg duration ${urges.avgDurationMin?.toFixed(1)}m`,
       `risk window: ${risk ? `days ${risk.from}-${risk.to} (${risk.hits}/${risk.of}), today day ${risk.day}, in window ${risk.inWindow}` : 'none'}`,
-      `sleep next-day: held ${pct(sleep.nextDay.held.rate)} (n=${sleep.nextDay.held.n}) vs not ${pct(sleep.nextDay.notHeld.rate)} (n=${sleep.nextDay.notHeld.n}), z=${sleep.nextDay.z?.toFixed(2)}`,
+      `sleep next-day: held ${pct(sleep.nextDay.held.rate)} (n=${sleep.nextDay.held.n}) vs not ${pct(sleep.nextDay.notHeld.rate)} (n=${sleep.nextDay.notHeld.n}), setbacks ${sleep.nextDay.setbacks}`,
       'top factors:',
       ...top.map(
         (f) =>

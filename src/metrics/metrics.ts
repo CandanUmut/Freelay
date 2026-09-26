@@ -175,6 +175,12 @@ export function layerRate(s: Snapshot, layer: Layer, windowDays = 30): number | 
 // ---------------------------------------------------------------- factors
 
 export const MIN_ARM = 8
+/**
+ * The spec's 8-days-per-arm rule alone is not enough: with few setbacks both
+ * arms are near 100% and any difference is one or two events. Require this
+ * many setbacks in the sample too.
+ */
+export const MIN_SETBACKS = 5
 export type Strength = 'strong' | 'moderate' | 'weak'
 
 export interface Arm {
@@ -192,6 +198,9 @@ export interface LagResult {
   diff: number | null
   /** Days still needed in the smaller arm before a difference is shown. */
   needed: number
+  /** Setbacks in the sample, and how many more are needed (MIN_SETBACKS). */
+  setbacks: number
+  neededSetbacks: number
   /** Two-proportion z statistic; a rough guard against reading noise as signal. */
   z: number | null
   strength: Strength | null
@@ -234,13 +243,16 @@ function lagResult(item: TrackedItem, map: DayMap, absIds: string[], dates: Loca
   }
   for (const arm of [held, notHeld]) arm.rate = arm.n ? arm.clean / arm.n : null
   const needed = Math.max(0, MIN_ARM - Math.min(held.n, notHeld.n))
-  if (needed > 0) return { lag, held, notHeld, diff: null, needed, z: null, strength: null }
+  const setbacks = held.n - held.clean + notHeld.n - notHeld.clean
+  const neededSetbacks = Math.max(0, MIN_SETBACKS - setbacks)
+  const base = { lag, held, notHeld, needed, setbacks, neededSetbacks }
+  if (needed > 0 || neededSetbacks > 0) return { ...base, diff: null, z: null, strength: null }
 
   const diff = held.rate! - notHeld.rate!
   const pooled = (held.clean + notHeld.clean) / (held.n + notHeld.n)
   const se = Math.sqrt(pooled * (1 - pooled) * (1 / held.n + 1 / notHeld.n))
   const z = se > 0 ? diff / se : 0
-  return { lag, held, notHeld, diff, needed: 0, z, strength: classify(diff, z) }
+  return { ...base, diff, z, strength: classify(diff, z) }
 }
 
 /**
@@ -372,6 +384,8 @@ export function urgeStats(s: Snapshot, dateOf: (u: Urge) => LocalDate): UrgeStat
 export interface WeekPoint {
   weekEnding: LocalDate
   count: number
+  resisted: number
+  acted: number
   avgIntensity: number | null
   avgDurationMin: number | null
 }
@@ -388,8 +402,34 @@ export function urgeTrend(s: Snapshot, dateOf: (u: Urge) => LocalDate, weeks = 8
     return {
       weekEnding: end,
       count: us.length,
+      resisted: us.filter((u) => u.outcome === 'resisted').length,
+      acted: us.filter((u) => u.outcome === 'acted').length,
       avgIntensity: avg(us.map((u) => u.intensity)),
       avgDurationMin: avg(us.filter((u) => u.durationMin !== undefined).map((u) => u.durationMin!)),
     }
   })
+}
+
+export interface RatePoint {
+  date: LocalDate
+  abstinence: number | null
+  boundary: number | null
+  selfcare: number | null
+}
+
+/**
+ * Rolling 30-day rate per layer, sampled weekly, oldest first. Starts once
+ * there is at least a week of data so the first points aren't one-day noise.
+ */
+export function rateSeries(s: Snapshot, weeks = 26): RatePoint[] {
+  const first = s.days.map((d) => d.date).sort()[0]
+  if (!first) return []
+  const out: RatePoint[] = []
+  for (let k = weeks - 1; k >= 0; k--) {
+    const end = addDays(s.today, -7 * k)
+    if (diffDays(first, end) < 6) continue
+    const at = { ...s, today: end }
+    out.push({ date: end, abstinence: abstinenceRate(at).rate, boundary: layerRate(at, 'boundary'), selfcare: layerRate(at, 'selfcare') })
+  }
+  return out
 }

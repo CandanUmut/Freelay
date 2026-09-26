@@ -1,5 +1,5 @@
 import type { LedgerDB } from './db'
-import { DEFAULT_SETTINGS, type LapsePlan, type Settings, type TrackedItem } from './types'
+import { DEFAULT_META, DEFAULT_SETTINGS, type LapsePlan, type Meta, type Settings, type TrackedItem } from './types'
 
 /** Seed ids are stable slugs so fixtures, lessons and tests can refer to them. */
 export const SEED_ITEMS: TrackedItem[] = [
@@ -53,4 +53,19 @@ export async function saveSettings(db: LedgerDB, patch: Partial<Settings>): Prom
 export async function getLapsePlan(db: LedgerDB): Promise<LapsePlan> {
   const row = await db.kv.get('lapsePlan')
   return row?.key === 'lapsePlan' ? row.value : DEFAULT_LAPSE_PLAN
+}
+
+export async function getMeta(db: LedgerDB): Promise<Meta> {
+  const row = await db.kv.get('meta')
+  return row?.key === 'meta' ? { ...DEFAULT_META, ...row.value } : DEFAULT_META
+}
+
+export async function saveMeta(db: LedgerDB, patch: Partial<Meta>): Promise<Meta> {
+  const next = { ...(await getMeta(db)), ...patch }
+  await db.kv.put({ key: 'meta', value: next })
+  return next
+}
+
+export async function saveLapsePlan(db: LedgerDB, plan: LapsePlan): Promise<void> {
+  await db.kv.put({ key: 'lapsePlan', value: plan })
 }
