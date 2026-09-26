@@ -1,11 +1,16 @@
+import { useEffect, useMemo } from 'react'
 import { dismissLesson } from '../app/actions'
 import { useData } from '../app/data'
 import { useNav } from '../app/nav'
 import { suggestLesson } from '../content/triggers'
+import { db } from '../db/db'
+import { saveMeta } from '../db/seed'
 import { LAYERS } from '../db/types'
 import { addDays, diffDays } from '../lib/dates'
 import { abstinenceRate, dayOutcome, layerRate, riskWindow, setbackDates, streaks, totalCleanDays } from '../metrics/metrics'
+import { buildInsights, isReviewDay, patternProgress, pickInsight, weekReview } from '../metrics/insights'
 import { forwardTarget, riskText } from '../metrics/targets'
+import { InsightRow, WeekReviewCard } from '../ui/insight'
 import { IconChevron, IconLog, IconPen, IconSettings, IconWave } from '../ui/icons'
 import { Card, Label, LAYER, formatDate, pct, plural } from '../ui/kit'
 
@@ -26,6 +31,15 @@ export function Today() {
   const lastSetback = setbackDates(s).at(-1)
   const showLapse = lastSetback !== undefined && diffDays(lastSetback, today) <= 1 && meta.lapseSeenFor !== lastSetback
   const lesson = suggestLesson({ s, plans: data.plans, settings, meta, dateOf: data.dateOf })
+  const insights = useMemo(() => buildInsights(s, { dateOf: data.dateOf }), [s, data.dateOf])
+  const card = pickInsight(insights, meta.insightsShown ?? {}, today)
+  const review = isReviewDay(s) && meta.reviewSeen !== today ? weekReview(s, data.dateOf) : null
+  const progress = patternProgress(s, data.dateOf, insights)
+
+  // Remember which insight Today showed, so tomorrow's card is a different one.
+  useEffect(() => {
+    if (card && meta.insightsShown?.[card.id] !== today) void saveMeta(db, { insightsShown: { ...meta.insightsShown, [card.id]: today } })
+  }, [card?.id, today]) // eslint-disable-line react-hooks/exhaustive-deps
   const daysSinceExport = meta.lastExportAt ? diffDays(meta.lastExportAt.slice(0, 10), today) : null
   const exportDue = s.days.length >= 14 && (daysSinceExport === null || daysSinceExport >= 21)
 
@@ -114,6 +128,29 @@ export function Today() {
         <Action label="Journal" onClick={() => nav.push({ kind: 'journal' })} icon={<IconPen className="size-7" />} />
         <Action label="Panic" onClick={() => nav.push({ kind: 'panic' })} icon={<IconWave className="size-7" />} />
       </div>
+
+      {review && (
+        <div className="mt-6">
+          <WeekReviewCard r={review} onDismiss={() => saveMeta(db, { reviewSeen: today })} />
+        </div>
+      )}
+
+      {card && (
+        <button type="button" onClick={() => nav.setTab('progress')} className="mt-6 block w-full rounded-3xl bg-surface p-5 text-left">
+          <Label>From your data</Label>
+          <div className="mt-2 text-[17px]">
+            <InsightRow i={card} />
+          </div>
+          {!progress.ready && s.days.length >= 3 && (
+            <div className="mt-4 flex items-center gap-3 text-[13px] text-muted">
+              <span className="h-1 flex-1 overflow-hidden rounded-full bg-surface-2">
+                <span className="block h-full rounded-full bg-abstinence" style={{ width: `${Math.max(3, progress.progress * 100)}%` }} />
+              </span>
+              pattern finder {Math.round(progress.progress * 100)}%
+            </div>
+          )}
+        </button>
+      )}
 
       {lesson && (
         <Card className="mt-6">

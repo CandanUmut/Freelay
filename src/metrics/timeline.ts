@@ -75,6 +75,21 @@ export function buildTimeline(s: Snapshot, dayBoundaryHour: number): TimelineEve
       events.push({ date: urgeDate(u.at), kind: 'urges', title: n === 1 ? 'First urge logged and resisted' : `${n} urges resisted` })
   })
 
+  // Early firsts: small, real wins that exist long before any long streak does.
+  const firstTimed = s.urges.filter((u) => typeof u.durationMin === 'number').sort((a, b) => a.at.localeCompare(b.at))[0]
+  if (firstTimed)
+    events.push({ date: urgeDate(firstTimed.at), kind: 'urges', title: `First urge you timed: it passed in ${firstTimed.durationMin} minutes` })
+  let run7 = 0
+  let prevReported: LocalDate | null = null
+  for (const d of dates) {
+    run7 = prevReported && diffDays(prevReported, d) === 1 ? run7 + 1 : 1
+    prevReported = d
+    if (run7 === 7) {
+      events.push({ date: d, kind: 'milestone', title: 'First full week of check-ins' })
+      break
+    }
+  }
+
   function precededBy(d: LocalDate): string[] {
     const out: string[] = []
     const crossed = (date: LocalDate) =>

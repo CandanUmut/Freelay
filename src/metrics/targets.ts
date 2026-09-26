@@ -49,7 +49,8 @@ export function forwardTarget(st: Streaks, reportedDays: number, settings: Setti
 export function riskText(r: RiskWindow | null): string | null {
   // On the day of a setback itself, the lapse protocol is what matters, not the next window.
   if (!r || r.day === 0) return null
-  const cluster = `${r.hits} of your last ${r.of} setbacks came on days ${r.from}–${r.to}.`
+  const x = r.ratio >= 2.5 ? `about ${Math.round(r.ratio)}×` : 'about twice'
+  const cluster = `Setbacks have been ${x} as likely on days ${r.from}–${r.to} after the last one (${r.hits} of ${r.of}).`
   if (r.inWindow) return `Day ${r.day}. ${cluster} Today is inside that range.`
   if (r.daysUntil > 0 && r.daysUntil <= 2)
     return `Day ${r.day}. ${cluster} That range starts in ${r.daysUntil} ${r.daysUntil === 1 ? 'day' : 'days'}.`

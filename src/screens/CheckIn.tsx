@@ -62,7 +62,7 @@ export function CheckIn({ date: dateProp, onClose }: { date?: LocalDate; onClose
       } else entries[i.id] = done.has(i.id)
     }
     const row = await saveDay(date, data.today, { entries, mood, note })
-    setFeedback(checkInFeedback(before, withDay(before, row), date))
+    setFeedback(checkInFeedback(before, withDay(before, row), date, data.dateOf))
     setPhase(outcome === 'setback' ? 'lapse' : 'result')
   }
 

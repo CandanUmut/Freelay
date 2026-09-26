@@ -102,8 +102,8 @@ describe('factor impact', () => {
     expect(f.sameDay.held).toMatchObject({ n: 10, clean: 10, rate: 1 })
     expect(f.sameDay.notHeld).toMatchObject({ n: 10, clean: 5, rate: 0.5 })
     expect(f.sameDay.diff).toBeCloseTo(0.5)
-    // 50 points apart but only 20 days: z≈2.6, so moderate rather than strong.
-    expect(f.sameDay.strength).toBe('moderate')
+    // 50 points apart but only 20 days: z≈2.6, below the multiple-comparison bar.
+    expect(f.sameDay.strength).toBe('weak')
   })
   it('withholds a result below the minimum sample and says how many more are needed', () => {
     const days = lastNDays(TODAY, 11).map((d, i) => clean(d, { 'bnd-phone': i < 3 }))
@@ -159,9 +159,11 @@ describe('risk window', () => {
     }
     const r = riskWindow(snap(days))!
     expect(r.day).toBe(12)
-    expect(r.from).toBe(11)
-    expect(r.to).toBe(15)
-    expect(r.hits).toBe(4)
+    expect(r.from).toBeGreaterThanOrEqual(10)
+    expect(r.from).toBeLessThanOrEqual(12)
+    expect(r.to).toBeGreaterThanOrEqual(13)
+    expect(r.hits).toBeGreaterThanOrEqual(3)
+    expect(r.ratio).toBeGreaterThan(2)
     expect(r.inWindow).toBe(true)
   })
   it('returns null without enough setbacks or with no cluster', () => {
@@ -181,10 +183,22 @@ describe('risk window', () => {
       d = addDays(d, g)
       days.push(setback(d))
     }
-    const r = riskWindow(snap(days))!
+    // Plus a long stretch without setbacks, so days 10-11 stand out against the base rate.
+    const r = riskWindow(snap([setback(addDays(TODAY, -140)), ...days]))!
     expect(r.day).toBe(5)
     expect(r.inWindow).toBe(false)
-    expect(r.daysUntil).toBe(5)
+    expect(r.daysUntil).toBeGreaterThan(0)
+    expect(r.daysUntil).toBeLessThanOrEqual(5)
+  })
+  it('does not flag frequent setbacks that are simply frequent', () => {
+    // A setback every 1-3 days: gaps cluster at 1-3, but that is just the base rate.
+    let d = addDays(TODAY, -60)
+    const days = [setback(d)]
+    for (const g of [2, 1, 3, 2, 2, 1, 3, 2, 1, 2, 3, 2, 2, 1, 3, 2, 2]) {
+      d = addDays(d, g)
+      days.push(setback(d))
+    }
+    expect(riskWindow({ ...snap(days), today: addDays(d, 1) })).toBeNull()
   })
 })
 

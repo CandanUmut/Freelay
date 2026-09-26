@@ -20,13 +20,14 @@ describe('check-in feedback', () => {
     const past = lastNDays('2026-09-25', 10).map((d) => day(d, { 'abs-sites': false, 'bnd-phone': false, 'bnd-lonely': false }))
     const before: Snapshot = { items: SEED_ITEMS, days: past, urges: [], today: TODAY }
     const today = day(TODAY, { 'abs-sites': true, 'bnd-phone': true, 'bnd-lonely': false, 'sc-fast': false })
-    const f = checkInFeedback(before, withDay(before, today), TODAY)
+    const f = checkInFeedback(before, withDay(before, today), TODAY, (u) => u.at.slice(0, 10))
     expect(f.outcome).toBe('setback')
     expect(f.rateBefore).toBe(1)
     expect(f.rateAfter).toBeCloseTo(10 / 11)
     expect(f.totalClean).toBe(10)
     expect(f.boundary).toEqual({ held: 1, total: 2, avg: 2 })
-    expect(f.insight).toMatch(/^Phone in bed/)
+    // Eleven days is too little for a pattern; the feedback falls back to a plain fact.
+    expect(f.insight).toMatch(/of the last 11 days you reported were clean/)
   })
 })
 

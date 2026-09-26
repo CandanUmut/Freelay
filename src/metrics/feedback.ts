@@ -1,6 +1,7 @@
 import { lastNDays } from '../lib/dates'
 import type { DayEntry, Layer, LocalDate, TrackedItem } from '../db/types'
-import { abstinenceRate, dayOutcome, factorImpact, isHeld, totalCleanDays, type FactorImpact, type LagResult, type Snapshot } from './metrics'
+import { buildInsights } from './insights'
+import { abstinenceRate, dayOutcome, isHeld, totalCleanDays, type FactorImpact, type LagResult, type Snapshot } from './metrics'
 
 export interface LayerCount {
   held: number
@@ -74,24 +75,20 @@ export function factorNeeds(f: FactorImpact): string {
  * What a check-in changed, computed the moment it is saved. `after` must
  * already include the saved day.
  */
-export function checkInFeedback(before: Snapshot, after: Snapshot, date: LocalDate): CheckInFeedback {
+export function checkInFeedback(before: Snapshot, after: Snapshot, date: LocalDate, dateOf: (u: { at: string }) => LocalDate): CheckInFeedback {
   const absIds = after.items.filter((i) => i.layer === 'abstinence').map((i) => i.id)
   const day = after.days.find((d) => d.date === date)
   const outcome = dayOutcome(day, absIds)
 
-  // Pick one factor relevant to today: a boundary crossed or self-care missed, with enough data.
-  const factors = factorImpact(after)
+  // Prefer a pattern about something that happened today (a boundary crossed,
+  // self care missed); otherwise the strongest thing the data can say.
   // perWeek items aren't expected daily, so not doing one today isn't "missed".
-  // Boundaries crossed come first: they're the more actionable signal.
-  const relevant = factors
-    .filter((f) => f.item.target?.type !== 'perWeek' && isHeld(f.item, day?.entries[f.item.id]) === false)
-    .sort((a, b) => Number(a.item.layer !== 'boundary') - Number(b.item.layer !== 'boundary'))
-  const withData = (list: FactorImpact[]) =>
-    list.filter((f) => f.best).sort((a, b) => Math.abs(b.best!.diff!) - Math.abs(a.best!.diff!))[0]
-  const pick = withData(relevant)
-  let insight: string | null = null
-  if (pick) insight = `${factorSentence(pick, pick.best!)} ${strengthNote(pick.best!)}`
-  else if (relevant[0]) insight = factorNeeds(relevant[0])
+  const missed = new Set(
+    after.items.filter((i) => i.target?.type !== 'perWeek' && isHeld(i, day?.entries[i.id]) === false).map((i) => i.id),
+  )
+  const all = buildInsights(after, { dateOf })
+  const pick = all.find((i) => i.itemId && missed.has(i.itemId) && i.confidence !== 'fact') ?? all.find((i) => i.confidence !== 'fact') ?? all[0]
+  const insight = pick ? [pick.text, pick.detail].filter(Boolean).join(' ') : null
 
   return {
     outcome,

@@ -98,9 +98,13 @@ export interface Meta {
   lessonsDismissed: Record<string, LocalDate>
   /** The setback date whose lapse protocol has been seen. */
   lapseSeenFor?: LocalDate
+  /** Insight id -> last local date it was the Today card, so the card rotates. */
+  insightsShown?: Record<string, LocalDate>
+  /** Local date the weekly review was last dismissed. */
+  reviewSeen?: LocalDate
 }
 
-export const DEFAULT_META: Meta = { lessonsRead: {}, lessonsDismissed: {} }
+export const DEFAULT_META: Meta = { lessonsRead: {}, lessonsDismissed: {}, insightsShown: {} }
 
 /** Singleton rows (settings, lapse plan, meta) live in a key/value table. */
 export type KvRow =

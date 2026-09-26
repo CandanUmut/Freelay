@@ -1,8 +1,9 @@
 import { useData } from '../../app/data'
 import type { Layer } from '../../db/types'
-import { diffDays } from '../../lib/dates'
-import { factorNeeds, factorSentence, strengthNote } from '../../metrics/feedback'
-import { factorImpact, MIN_SETBACKS, rateSeries, setbackDates, topFactors, urgeStats, urgeTrend, type LagResult } from '../../metrics/metrics'
+import { factorNeeds } from '../../metrics/feedback'
+import { buildInsights, patternProgress, weekReview } from '../../metrics/insights'
+import { factorImpact, rateSeries, urgeStats, urgeTrend, type LagResult } from '../../metrics/metrics'
+import { InsightRow, PatternFinder, WeekReviewCard } from '../../ui/insight'
 import { LAYER, Label, pct, plural, SETBACK_HEX } from '../../ui/kit'
 import { ChartCard, ChartLegend, StackedColumns, TrendLines, type Series } from './charts'
 
@@ -16,17 +17,17 @@ const URGE_SERIES: Series[] = [
   { key: 'acted', label: 'Acted on', color: SETBACK_HEX },
 ]
 
-const STRENGTH_STYLE = { strong: 'bg-ink text-bg', moderate: 'border border-ink/60 text-ink', weak: 'border border-line text-muted' }
-
 export function Insights() {
   const { snapshot: s, dateOf } = useData()
-  const top = topFactors(s)
-  const clear = top.filter((f) => f.best!.strength !== 'weak')
+  const insights = buildInsights(s, { dateOf })
+  const patterns = insights.filter((i) => i.kind === 'urge-factor' || i.kind === 'setback-factor')
+  const facts = insights.filter((i) => i.kind === 'fact' || i.kind === 'trend')
+  const progress = patternProgress(s, dateOf, insights)
+  const review = weekReview(s, dateOf)
   const all = factorImpact(s)
   const series = rateSeries(s)
   const weekly = urgeTrend(s, dateOf, 12).map((w) => ({ ...w, date: w.weekEnding }))
   const stats = urgeStats(s, dateOf)
-  const setbacks60 = setbackDates(s).filter((d) => diffDays(d, s.today) < 60).length
 
   const half = (xs: (number | null)[]) => {
     const v = xs.filter((x): x is number => x !== null)
@@ -41,38 +42,38 @@ export function Insights() {
 
   return (
     <div>
-      <section className="rounded-3xl bg-surface p-5">
-        <Label>What matters most in your data</Label>
-        <p className="mt-1 text-[13px] text-muted">Last 60 days. Observed differences, not proof of cause.</p>
-        {top.length === 0 ? (
-          <p className="mt-4 leading-relaxed">
-            Not enough to compare yet. Each comparison needs at least 8 days on each side and {MIN_SETBACKS} setbacks in the window
-            {setbacks60 < MIN_SETBACKS ? `, and you have fewer than that. That's the better problem to have.` : '.'} Keep checking in; this fills in on its own.
-          </p>
+      {review && <WeekReviewCard r={review} />}
+
+      <section className="mt-4 rounded-3xl bg-surface p-5">
+        <Label>Patterns in your data</Label>
+        <p className="mt-1 text-[13px] text-muted">Last 60 days. Observed together, not proof of cause. Each one must hold in both halves of the window.</p>
+        {patterns.length === 0 ? (
+          <div className="mt-4">
+            <PatternFinder p={progress} />
+          </div>
         ) : (
-          <>
-            {clear.length === 0 && (
-              <p className="mt-4 leading-relaxed">
-                No clear pattern yet. The biggest differences so far are weak, so treat them as hints, not findings.
-              </p>
-            )}
-            <ol className="mt-4 space-y-4">
-              {(clear.length ? clear : top).map((f, i) => (
-                <li key={f.item.id} className={`flex gap-3 ${clear.length ? '' : 'text-ink/75'}`}>
-                  <span className="pt-0.5 text-muted tabular-nums">{i + 1}</span>
-                  <div>
-                    <p className="leading-relaxed">{factorSentence(f, f.best!)}</p>
-                    <div className="mt-2 flex items-center gap-2">
-                      <span className={`rounded-full px-2.5 py-0.5 text-[12px] ${STRENGTH_STYLE[f.best!.strength!]}`}>{f.best!.strength}</span>
-                      <span className="text-[13px] text-muted">{strengthNote(f.best!)}</span>
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </>
+          <ul className="mt-4 space-y-4">
+            {patterns.map((i) => (
+              <li key={i.id}>
+                <InsightRow i={i} />
+              </li>
+            ))}
+          </ul>
         )}
       </section>
+
+      {facts.length > 0 && (
+        <section className="mt-4 rounded-3xl bg-surface p-5">
+          <Label>What's true so far</Label>
+          <ul className="mt-4 space-y-4">
+            {facts.map((i) => (
+              <li key={i.id}>
+                <InsightRow i={i} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <ChartCard title="30-day rate, by layer" sub="Boundaries and self care lead; abstinence follows.">
         {series.length < 2 ? (
@@ -121,9 +122,11 @@ export function Insights() {
         )}
       </ChartCard>
 
-      <section className="mt-4 rounded-3xl bg-surface p-5">
-        <Label>Every factor</Label>
-        <p className="mt-1 text-[13px] text-muted">Abstinence clean rate split by each item, on the same day and the day after.</p>
+      <details className="mt-4 rounded-3xl bg-surface p-5">
+        <summary className="min-h-11 cursor-pointer list-none">
+          <Label className="inline">Raw comparisons</Label>
+          <p className="mt-1 text-[13px] text-muted">Clean rate split by every item, same day and next day, before any filtering. Most of these are noise.</p>
+        </summary>
         <ul className="mt-3 divide-y divide-line">
           {all.map((f) => (
             <li key={f.item.id} className="py-3">
@@ -145,7 +148,7 @@ export function Insights() {
             </li>
           ))}
         </ul>
-      </section>
+      </details>
     </div>
   )
 }

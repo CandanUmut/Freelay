@@ -215,15 +215,16 @@ export interface FactorImpact {
 }
 
 /**
- * Thresholds are deliberately strict: ~11 items x 2 lags is ~22 comparisons,
- * so at |z| >= 1.5 several would look "real" by chance alone. |z| >= 2 is
- * still loose for 22 tests; the label is a guard, not a significance test.
+ * Thresholds account for ~22 simultaneous comparisons (11 items x 2 lags):
+ * a Bonferroni-style bar of |z| >= 3 keeps the chance of any false "moderate"
+ * near 5%. The simulator (npm run sim) showed |z| >= 2 produced confident
+ * claims on a synthetic user whose data had no pattern at all.
  */
 function classify(diff: number, z: number): Strength {
   const a = Math.abs(diff)
   const az = Math.abs(z)
-  if (a >= 0.15 && az >= 3) return 'strong'
-  if (a >= 0.1 && az >= 2) return 'moderate'
+  if (a >= 0.15 && az >= 3.5) return 'strong'
+  if (a >= 0.1 && az >= 3) return 'moderate'
   return 'weak'
 }
 
@@ -302,48 +303,67 @@ export interface RiskWindow {
   day: number
   from: number
   to: number
-  /** How many of the recent setbacks fell inside [from, to]. */
+  /** Setbacks that came on a day inside [from, to] after the previous one. */
   hits: number
-  /** How many recent setbacks were considered. */
+  /** All setbacks considered (each measured from the one before it). */
   of: number
+  /** How many times more likely a setback was inside the window than overall. */
+  ratio: number
   inWindow: boolean
   /** Days until the window opens; 0 when inside it, negative once past it. */
   daysUntil: number
 }
 
 /**
- * Looks at the gaps (days since the previous setback) of the most recent
- * setbacks and finds the narrowest range holding most of them. Needs at
- * least 3 gaps. Returns null when there is no clear cluster.
+ * Hazard-based: for each candidate range of "days since the last setback",
+ * compares setbacks per day-at-risk inside the range with the overall rate.
+ * A range is flagged only when it is clearly riskier (>= 2x, at least 3
+ * setbacks, and a one-sided Poisson z >= 2.5 to cover the many ranges tried).
+ *
+ * The first version flagged the range where gaps merely clustered; the
+ * simulator showed that fired on most days for people whose setbacks are
+ * frequent anyway, and predicted nothing. Clustering alone isn't risk.
  */
-export function riskWindow(s: Snapshot, recent = 6, maxWidth = 10): RiskWindow | null {
-  const setbacks = setbackDates(s)
+export function riskWindow(s: Snapshot, maxWidth = 7): RiskWindow | null {
+  const setbacks = setbackDates(s).filter((d) => diffDays(d, s.today) <= 365)
   if (setbacks.length < 4) return null
-  const gaps = setbacks.slice(1).map((d, i) => diffDays(setbacks[i]!, d)).slice(-recent)
-  const need = Math.max(3, Math.ceil(gaps.length * 0.6))
-  const sorted = [...gaps].sort((a, b) => a - b)
+  const gaps = setbacks.slice(1).map((d, i) => diffDays(setbacks[i]!, d))
+  const day = diffDays(setbacks.at(-1)!, s.today)
+  // Days already survived in the current run (today's outcome is not known yet).
+  const current = Math.max(0, day - 1)
+  const totalExposure = gaps.reduce((a, g) => a + g, 0) + current
+  const H = gaps.length / Math.max(1, totalExposure)
+  const maxGap = Math.max(...gaps)
 
-  let bestRange: { from: number; to: number; hits: number } | null = null
-  for (let i = 0; i + need - 1 < sorted.length; i++) {
-    for (let j = sorted.length - 1; j >= i + need - 1; j--) {
-      const from = sorted[i]!
-      const to = sorted[j]!
-      if (to - from > maxWidth) continue
-      const hits = j - i + 1
-      if (!bestRange || hits > bestRange.hits || (hits === bestRange.hits && to - from < bestRange.to - bestRange.from))
-        bestRange = { from, to, hits }
-      break
+  let best: { from: number; to: number; hits: number; ratio: number; z: number } | null = null
+  for (let from = 1; from <= maxGap; from++) {
+    for (let w = 3; w <= maxWidth; w++) {
+      const to = from + w - 1
+      let hits = 0
+      let exposure = 0
+      for (const g of gaps) {
+        if (g >= from && g <= to) hits++
+        exposure += Math.max(0, Math.min(g, to) - from + 1)
+      }
+      exposure += Math.max(0, Math.min(current, to) - from + 1)
+      if (hits < 3 || exposure === 0) continue
+      const expected = exposure * H
+      const ratio = hits / exposure / H
+      const z = (hits - expected) / Math.sqrt(expected)
+      if (ratio < 2 || z < 2.5) continue
+      if (!best || z > best.z) best = { from, to, hits, ratio, z }
     }
   }
-  if (!bestRange) return null
-
-  const day = diffDays(setbacks.at(-1)!, s.today)
+  if (!best) return null
   return {
     day,
-    ...bestRange,
+    from: best.from,
+    to: best.to,
+    hits: best.hits,
     of: gaps.length,
-    inWindow: day >= bestRange.from && day <= bestRange.to,
-    daysUntil: day < bestRange.from ? bestRange.from - day : day <= bestRange.to ? 0 : bestRange.to - day,
+    ratio: best.ratio,
+    inWindow: day >= best.from && day <= best.to,
+    daysUntil: day < best.from ? best.from - day : day <= best.to ? 0 : best.to - day,
   }
 }
 

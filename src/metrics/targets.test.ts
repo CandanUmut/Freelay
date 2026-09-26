@@ -35,9 +35,9 @@ describe('forward target', () => {
 
 describe('risk text', () => {
   it('speaks only inside or just before the window', () => {
-    const base = { from: 10, to: 16, hits: 4, of: 5 }
+    const base = { from: 10, to: 16, hits: 4, of: 5, ratio: 3.2 }
     expect(riskText({ ...base, day: 12, inWindow: true, daysUntil: 0 })).toBe(
-      'Day 12. 4 of your last 5 setbacks came on days 10–16. Today is inside that range.',
+      'Day 12. Setbacks have been about 3× as likely on days 10–16 after the last one (4 of 5). Today is inside that range.',
     )
     expect(riskText({ ...base, day: 9, inWindow: false, daysUntil: 1 })).toMatch(/starts in 1 day\./)
     expect(riskText({ ...base, day: 3, inWindow: false, daysUntil: 7 })).toBeNull()
