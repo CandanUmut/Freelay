@@ -60,9 +60,12 @@ To see the app with history: **Settings → Data and backup → Load sample data
 
 ## Install on iPhone
 
-1. Host the `dist/` folder over HTTPS. Any static host works (GitHub Pages, Netlify, Cloudflare Pages). A service worker needs HTTPS.
-2. Open the URL in Safari, then tap **Share → Add to Home Screen**. It installs as "Ledger", with a plain icon.
-3. Open it once while online. After that it works permanently in airplane mode.
+The app deploys to GitHub Pages on every push to `main` (`.github/workflows/deploy.yml`: install, test, build, publish `dist/`). It is served at **https://candanumut.github.io/Freelay/**.
+
+One-time setup: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+
+1. Open the URL in Safari, then tap **Share → Add to Home Screen**. It installs as "Ledger", with a plain icon.
+2. Open it once while online. After that it works permanently in airplane mode.
 
 ## Limits on iOS
 
