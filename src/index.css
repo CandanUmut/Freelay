@@ -1,0 +1,105 @@
+@import 'tailwindcss';
+
+/* One accent per layer, used everywhere. Setbacks use a neutral tone, never red. */
+@theme {
+  --color-bg: #121314;
+  --color-surface: #1b1c1e;
+  --color-surface-2: #26282b;
+  --color-line: #2e3034;
+  --color-ink: #ecebe8;
+  --color-muted: #9b9994;
+  /* Mark colours: validated for CVD separation on the dark surface. */
+  --color-abstinence: #6f86e6;
+  --color-boundary: #b8862a;
+  --color-selfcare: #2f9f76;
+  /* Lighter tints of the same hues for text, which needs more contrast than marks. */
+  --color-abstinence-ink: #a3b3f5;
+  --color-boundary-ink: #dcb368;
+  --color-selfcare-ink: #6cc9a3;
+  --color-setback: #74777d;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+}
+
+@utility pt-safe {
+  padding-top: max(env(safe-area-inset-top), 8px);
+}
+@utility pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 12px);
+}
+@utility px-safe {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Base styles live in the base layer so utility classes can override them. */
+@layer base {
+  html,
+  body {
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
+  }
+
+  body {
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+    color: inherit;
+  }
+
+  input,
+  textarea {
+    /* Avoid iOS zooming into fields under 16px. */
+    font-size: max(16px, 1em);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+}
+
+.scroll-area {
+  -webkit-overflow-scrolling: touch;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(0.62);
+    opacity: 0.55;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  45% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+}
+
+.breathe {
+  /* 4s in, a short hold, 5.5s out: a 10s cycle, about 6 breaths a minute. */
+  animation: breathe 10s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .breathe {
+    animation-duration: 20s;
+  }
+}
+
+/* Blank screen while the app is in the background (see main.tsx). */
+.privacy-cover body > * {
+  visibility: hidden;
+}
