@@ -1,14 +1,15 @@
 import { useData } from '../../app/data'
 import { useNav } from '../../app/nav'
 import { buildTimeline, type TimelineKind } from '../../metrics/timeline'
-import { Empty, LAYER, formatDate } from '../../ui/kit'
+import { Empty, formatDate } from '../../ui/kit'
+import { MARKS } from '../../ui/theme'
 
 const DOT: Record<TimelineKind, string> = {
-  start: '#ecebe8',
-  milestone: LAYER.abstinence.hex,
-  best: LAYER.abstinence.hex,
-  urges: LAYER.selfcare.hex,
-  setback: '#74777d',
+  start: 'var(--color-ink)',
+  milestone: MARKS.good,
+  best: MARKS.good,
+  urges: MARKS.good,
+  setback: MARKS.bad,
 }
 
 export function Timeline() {

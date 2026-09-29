@@ -10,6 +10,21 @@ You track three layers:
 
 The app's main output is how the layers relate in your own data. For example: *"On days you slept before midnight, your clean rate is 94% (38 days); when you didn't, 71% (19 days)."*
 
+## First run
+
+Nothing is tracked by default. A one-minute setup asks what you're working on (pornography, scrolling, gaming, gambling, alcohol, smoking, cannabis, binge eating, shopping, OCD compulsions) and offers suggestions for each layer, most relevant first; anything can be typed instead. The item editor keeps offering suggestions later. Suggested items reuse stable ids so data-driven lesson rules still work.
+
+## Beyond urges
+
+- **Look underneath.** After logging an urge, two optional questions: what was it promising (relief, escape, comfort, to feel wanted…) and what do you actually need (rest, connection, calm, meaning…). Then one small step toward that need, logged as a step.
+- **What you really need** (Plans): your most common needs, your own ways of meeting each one, and steps taken.
+- **Reflection every few days** (and the day after a setback): confidence, self-forgiveness, motivation, connection, stress, and what you've needed lately. Shown as trends on Progress → Insights.
+- These produce descriptive facts and trends only. "Days with a step had fewer urges" is *not* claimed: steps are usually logged right after urges, so that comparison would be confounded.
+
+## Theme
+
+Light by default, with a softer dark theme and a "match phone" option in Settings. Layer colours (indigo, amber, violet) and good/bad (green, red) are the same in both themes and were validated for colour-vision deficiency on both surfaces; setbacks also carry a hatch pattern so colour is never the only cue.
+
 ## Screens
 
 | Tab | What it does |
@@ -18,7 +33,7 @@ The app's main output is how the layers relate in your own data. For example: *"
 | **Log** | Logs an urge in three taps: intensity, outcome, save. Trigger, place and a note are optional. After saving it shows your resisted-urge count, this urge's intensity against your average, and the if-then plan for that trigger. An urge marked "acted on it" records a setback for that day and shows the lapse protocol first. |
 | **Progress** | • **Calendar** by layer, where tapping any day lets you view it or fill it in.<br>• **Insights**: ranked factors with strength labels, the 30-day rate trend per layer, and urge frequency, intensity and duration.<br>• **Urges**: a filtered list and an hour × weekday heatmap.<br>• **Timeline**: milestones, personal bests, and setbacks with what came before them. |
 | **Plans** | If-then plans linked to triggers, the lapse protocol (shown automatically after any setback), and the replacement habit. |
-| **Learn** | 21 short lessons with no order and nothing locked, grouped by topic. They cover the brain and dopamine, urges, habits, sleep and loneliness, setbacks and shame, compulsive sexual behaviour and OCD. Each lesson ends with the research behind it, and there is a **Further reading** library of 30 papers, books and talks. Every source was checked when added: DOIs against Crossref, free full texts through Europe PMC, and web pages by fetching them. |
+| **Learn** | 23 short lessons with no order and nothing locked, grouped by topic. They cover the brain and dopamine, urges, habits, sleep and loneliness, setbacks and shame, compulsive sexual behaviour and OCD. Each lesson ends with the research behind it, and there is a **Further reading** library of 37 papers, books and talks. Every source was checked when added: DOIs against Crossref, free full texts through Europe PMC, and web pages by fetching them. |
 
 **Panic** is a full-screen urge-surfing timer. When the urge passes, it records how long it lasted: *"That one lasted 9 minutes. Your average is 13. You have ridden out 24 urges."*
 

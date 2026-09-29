@@ -1,22 +1,28 @@
 @import 'tailwindcss';
 
-/* One accent per layer, used everywhere. Setbacks use a neutral tone, never red. */
+/*
+ * Light is the default; src/ui/theme.ts swaps these variables for the dark
+ * palette. Mark colours (layers, good/bad) are the same in both themes and
+ * were validated for colour-vision deficiency on both surfaces.
+ */
 @theme {
-  --color-bg: #121314;
-  --color-surface: #1b1c1e;
-  --color-surface-2: #26282b;
-  --color-line: #2e3034;
-  --color-ink: #ecebe8;
-  --color-muted: #9b9994;
-  /* Mark colours: validated for CVD separation on the dark surface. */
-  --color-abstinence: #6f86e6;
-  --color-boundary: #b8862a;
-  --color-selfcare: #2f9f76;
-  /* Lighter tints of the same hues for text, which needs more contrast than marks. */
-  --color-abstinence-ink: #a3b3f5;
-  --color-boundary-ink: #dcb368;
-  --color-selfcare-ink: #6cc9a3;
-  --color-setback: #74777d;
+  --color-bg: #f5f3ee;
+  --color-surface: #ffffff;
+  --color-surface-2: #eeebe4;
+  --color-line: #e2ded5;
+  --color-ink: #1f1e1c;
+  --color-muted: #6d6a64;
+  --color-empty: #ece9e2;
+  --color-abstinence: #5a67d8;
+  --color-boundary: #b8791c;
+  --color-selfcare: #8e59c9;
+  --color-good: #22a06b;
+  --color-bad: #c9372c;
+  --color-abstinence-ink: #4351b8;
+  --color-boundary-ink: #8a5a0f;
+  --color-selfcare-ink: #7040a8;
+  --color-good-ink: #16784f;
+  --color-bad-ink: #a82d24;
   --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
 }
 
@@ -102,4 +108,9 @@
 /* Blank screen while the app is in the background (see main.tsx). */
 .privacy-cover body > * {
   visibility: hidden;
+}
+
+/* Setbacks carry a hatch as well as a colour, so red/green is never the only cue. */
+.hatch {
+  background-image: repeating-linear-gradient(135deg, rgb(255 255 255 / 0.28) 0 2px, transparent 2px 6px);
 }

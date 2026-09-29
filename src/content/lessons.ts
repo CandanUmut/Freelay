@@ -567,6 +567,63 @@ Both are real. The second one tends to produce shame, and shame, as another less
 - If the distress is heavy, a therapist experienced with compulsive sexual behaviour can help, ideally one who takes your values seriously rather than dismissing them.`,
     sources: ['kraus2018', 'grubbs2019', 'tangney2007'],
   },
+  {
+    id: 'needs',
+    title: 'What the urge promises, and what you need',
+    summary: "An urge is often a bad answer to a real need. Find the need, and there are better answers.",
+    body: `When an urge arrives it comes with a promise: relief, escape, excitement, comfort, a moment of feeling wanted. The promise is usually about something real. After a lonely evening, the need for connection is real. After a draining week, the need for rest is real. The habit is just one way of meeting it, and usually a poor one: brief, and followed by feeling worse.
+
+## Two questions
+
+When you log an urge, the app asks two optional questions:
+
+- What was it promising? The immediate pay-off the urge was offering.
+- What do you actually need right now? The thing underneath.
+
+They often differ. An urge that promises excitement can sit on top of boredom, or on top of a week with nothing that felt meaningful. One that promises comfort can sit on top of being exhausted.
+
+## Why the need matters
+
+Psychologists have long argued that people have basic needs (self-determination theory names three: feeling capable, having choice, and being connected to others) and that when these go unmet, people drift toward whatever gives a quick substitute. Clinicians working with addiction have made a related observation: many people use a substance or behaviour to manage painful feelings. That idea comes mostly from clinical experience rather than trials, but it matches what many people notice about themselves.
+
+The practical point: if you only fight the urge, the need is still there tomorrow. If you meet the need another way, the urge has less to offer.
+
+## Small steps count
+
+You don't need to fix loneliness in one evening. Text one person. Go somewhere with people around. Lie down for fifteen minutes without the phone. The Plans tab keeps your own list of ways to meet each need, and logs each one as a step.
+
+Over a few weeks, the Insights tab shows which needs come up most. That's often the most useful thing the app can tell you: not what you're trying to stop, but what you're actually missing.`,
+    sources: ['ryan2000', 'khantzian1997', 'brewerTed', 'berridge2016'],
+  },
+  {
+    id: 'confidence',
+    title: 'Confidence, motivation and forgiveness',
+    summary: 'How you see yourself shapes what happens next. These three are worth watching, and they can change.',
+    body: `Every few days the app asks a few short questions: how confident you feel, how kindly you're treating yourself, how much you want this change, how connected you feel, how stressed you are. Here's why those matter as much as the urges.
+
+## Confidence
+
+Researchers call it self-efficacy: your belief that you can handle a difficult situation without falling back on the habit. Across many studies of addiction treatment, it's one of the more consistent predictors of how things go. It isn't a fixed trait. It grows from evidence, and the best evidence is your own: each urge you ride out, each hard evening you get through. That's why the app counts them.
+
+Low confidence isn't a verdict. It's a signal to lean on plans and structure rather than willpower, especially in the situations that feel shakiest.
+
+## Motivation
+
+Motivation goes up and down, sometimes daily. Wanting to change and not wanting to change at the same time is normal; counsellors call it ambivalence. Motivational interviewing, an approach built on working with that ambivalence rather than fighting it, has decades of research behind it (with modest but real effects).
+
+Two practical points follow. Don't wait to feel motivated before acting: set things up on high-motivation days so low days are easier. And when motivation dips, remind yourself why you started, in your own words. A journal entry written on a good day is useful here.
+
+## Self-forgiveness
+
+After a slip, being hard on yourself can feel like taking it seriously. The research points the other way: shame tends to predict more relapse, while self-compassion tends to increase motivation to improve (see "Shame is not a brake"). Recovery communities have said the same for a long time.
+
+Forgiving yourself isn't pretending it didn't matter. It's refusing to add a second injury to the first, so you have the energy for the next day.
+
+## Using the numbers
+
+On Progress → Insights, each of these shows as a small line over time. Watch the direction rather than any single answer. Rising confidence with falling urges is progress, even while setbacks still happen.`,
+    sources: ['kadden2011', 'lundahl2010', 'webb2017', 'breines2012', 'randles2013'],
+  },
 ]
 
 export const lessonById = (id: string) => LESSONS.find((l) => l.id === id)

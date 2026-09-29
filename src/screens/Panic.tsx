@@ -74,8 +74,8 @@ export function Panic({ urgeId, onClose }: { urgeId?: string; onClose: () => voi
               {mm}:{ss}
             </div>
             <div className="relative mx-auto mt-6 grid size-56 place-items-center">
-              <div className="breathe absolute inset-0 rounded-full bg-selfcare/25" />
-              <div className="breathe absolute inset-8 rounded-full bg-selfcare/30" />
+              <div className="breathe absolute inset-0 rounded-full bg-good/25" />
+              <div className="breathe absolute inset-8 rounded-full bg-good/30" />
               <span className="relative text-[17px]" aria-live="polite">
                 {breath}
               </span>
@@ -129,7 +129,7 @@ export function Panic({ urgeId, onClose }: { urgeId?: string; onClose: () => voi
 
         {phase === 'done' && result && (
           <section className="mt-10">
-            <Label className="text-selfcare-ink">It passed</Label>
+            <Label className="text-good-ink">It passed</Label>
             <p className="mt-4 text-[30px] font-semibold leading-tight">
               That one lasted {result.minutes} {result.minutes === 1 ? 'minute' : 'minutes'}.
             </p>

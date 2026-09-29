@@ -1,3 +1,4 @@
+import Dexie from 'dexie'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { localDateOf } from '../lib/dates'
 import {
@@ -15,7 +16,7 @@ import {
 import { applyImport, exportAll, ImportError, parseExport, previewImport } from './backup'
 import { LedgerDB, SCHEMA_VERSION } from './db'
 import { buildFixture, loadFixture } from './fixture'
-import { ensureSeeded, getSettings, SEED_ITEMS } from './seed'
+import { ensureSeeded, getMeta, getSettings, SEED_ITEMS } from './seed'
 
 const TODAY = '2026-09-26'
 let db: LedgerDB
@@ -30,12 +31,41 @@ afterEach(async () => {
 })
 
 describe('seed', () => {
-  it('seeds the three layers once', async () => {
+  it('creates settings but no tracked items: new users choose their own', async () => {
     await ensureSeeded(db)
-    const items = await db.items.toArray()
-    expect(items).toHaveLength(SEED_ITEMS.length)
-    expect(new Set(items.map((i) => i.layer))).toEqual(new Set(['abstinence', 'boundary', 'selfcare']))
+    expect(await db.items.count()).toBe(0)
     expect((await getSettings(db)).dayBoundaryHour).toBe(4)
+    expect((await getSettings(db)).theme).toBe('light')
+  })
+
+  it('sample data adds the starter items it needs', async () => {
+    await loadFixture(db, TODAY)
+    expect(await db.items.count()).toBe(SEED_ITEMS.length)
+  })
+})
+
+describe('upgrade from v1', () => {
+  it('keeps existing data, switches the old dark default to light, and skips first-run setup', async () => {
+    const name = `upgrade-${n++}`
+    const old = new Dexie(name)
+    old.version(1).stores({ items: 'id, layer, sortOrder', days: 'date', urges: 'id, at', plans: 'id, *triggerItemIds', journal: 'id, at', kv: 'key' })
+    await old.open()
+    await old.table('items').add({ id: 'mine', layer: 'abstinence', name: 'My item', active: true, sortOrder: 0 })
+    await old.table('days').add({ date: TODAY, entries: { mine: false }, loggedAt: '', backfilled: false })
+    await old.table('kv').put({ key: 'settings', value: { dayBoundaryHour: 3, pinEnabled: false, theme: 'dark' } })
+    old.close()
+
+    const upgraded = new LedgerDB(name)
+    await upgraded.open()
+    expect(upgraded.verno).toBe(2)
+    expect(await upgraded.items.get('mine')).toMatchObject({ name: 'My item' })
+    expect(await upgraded.days.count()).toBe(1)
+    const settings = await getSettings(upgraded)
+    expect(settings.theme).toBe('light')
+    expect(settings.dayBoundaryHour).toBe(3)
+    expect((await getMeta(upgraded)).onboarded).toBe(true)
+    expect(await upgraded.reflections.count()).toBe(0)
+    await upgraded.delete()
   })
 })
 

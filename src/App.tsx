@@ -10,6 +10,7 @@ import { Learn, LessonScreen } from './screens/Learn'
 import { LogUrge } from './screens/LogUrge'
 import { Panic } from './screens/Panic'
 import { Plans } from './screens/Plans'
+import { Reflect } from './screens/Reflect'
 import { SettingsScreen } from './screens/Settings'
 import { Today } from './screens/Today'
 import { IconLearn, IconLog, IconPlans, IconProgress, IconToday } from './ui/icons'
@@ -95,5 +96,7 @@ function OverlayView({ o, onClose }: { o: Overlay; onClose: () => void }) {
       return <ItemsEditor onClose={onClose} />
     case 'data':
       return <DataSettings onClose={onClose} />
+    case 'reflect':
+      return <Reflect onClose={onClose} />
   }
 }

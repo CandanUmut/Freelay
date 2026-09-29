@@ -1,6 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import type { Layer } from '../db/types'
 import { IconBack, IconClose } from './icons'
+import { MARKS } from './theme'
 
 export const pct = (x: number | null | undefined) => (x === null || x === undefined ? '—' : `${Math.round(x * 100)}%`)
 
@@ -9,29 +10,27 @@ export const LAYER: Record<Layer, { label: string; text: string; bg: string; sof
     label: 'Abstinence',
     text: 'text-abstinence-ink',
     bg: 'bg-abstinence',
-    soft: 'bg-abstinence/15',
+    soft: 'bg-abstinence/12',
     border: 'border-abstinence/70',
-    hex: '#6f86e6',
+    hex: MARKS.abstinence,
   },
   boundary: {
     label: 'Boundaries',
     text: 'text-boundary-ink',
     bg: 'bg-boundary',
-    soft: 'bg-boundary/15',
+    soft: 'bg-boundary/12',
     border: 'border-boundary/70',
-    hex: '#b8862a',
+    hex: MARKS.boundary,
   },
   selfcare: {
     label: 'Self Care',
     text: 'text-selfcare-ink',
     bg: 'bg-selfcare',
-    soft: 'bg-selfcare/15',
+    soft: 'bg-selfcare/12',
     border: 'border-selfcare/70',
-    hex: '#2f9f76',
+    hex: MARKS.selfcare,
   },
 }
-
-export const SETBACK_HEX = '#74777d'
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'quiet'
 const VARIANTS: Record<Variant, string> = {

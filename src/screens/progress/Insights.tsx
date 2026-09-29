@@ -4,8 +4,10 @@ import { factorNeeds } from '../../metrics/feedback'
 import { buildInsights, patternProgress, weekReview } from '../../metrics/insights'
 import { factorImpact, rateSeries, urgeStats, urgeTrend, type LagResult } from '../../metrics/metrics'
 import { InsightRow, PatternFinder, WeekReviewCard } from '../../ui/insight'
-import { LAYER, Label, pct, plural, SETBACK_HEX } from '../../ui/kit'
+import { LAYER, Label, pct, plural } from '../../ui/kit'
+import { MARKS } from '../../ui/theme'
 import { ChartCard, ChartLegend, StackedColumns, TrendLines, type Series } from './charts'
+import { Wellbeing } from './Wellbeing'
 
 const RATE_SERIES: Series[] = [
   { key: 'abstinence', label: 'Abstinence', color: LAYER.abstinence.hex },
@@ -13,13 +15,14 @@ const RATE_SERIES: Series[] = [
   { key: 'selfcare', label: 'Self Care', color: LAYER.selfcare.hex },
 ]
 const URGE_SERIES: Series[] = [
-  { key: 'resisted', label: 'Resisted', color: LAYER.selfcare.hex },
-  { key: 'acted', label: 'Acted on', color: SETBACK_HEX },
+  { key: 'resisted', label: 'Resisted', color: MARKS.good },
+  { key: 'acted', label: 'Acted on', color: MARKS.bad },
 ]
 
 export function Insights() {
-  const { snapshot: s, dateOf } = useData()
-  const insights = buildInsights(s, { dateOf })
+  const data = useData()
+  const { snapshot: s, dateOf } = data
+  const insights = buildInsights(s, { dateOf, reflections: data.reflections, steps: data.steps })
   const patterns = insights.filter((i) => i.kind === 'urge-factor' || i.kind === 'setback-factor')
   const facts = insights.filter((i) => i.kind === 'fact' || i.kind === 'trend')
   const progress = patternProgress(s, dateOf, insights)
@@ -75,6 +78,8 @@ export function Insights() {
         </section>
       )}
 
+      <Wellbeing />
+
       <ChartCard title="30-day rate, by layer" sub="Boundaries and self care lead; abstinence follows.">
         {series.length < 2 ? (
           <p className="py-6 text-center text-muted">Needs about two weeks of check-ins.</p>
@@ -118,7 +123,7 @@ export function Insights() {
         }
       >
         {stats.timed > 0 && (
-          <TrendLines data={weekly} series={[{ key: 'avgDurationMin', label: 'Minutes', color: LAYER.selfcare.hex }]} format={(v) => `${Math.round(v)}m`} height={150} />
+          <TrendLines data={weekly} series={[{ key: 'avgDurationMin', label: 'Minutes', color: MARKS.good }]} format={(v) => `${Math.round(v)}m`} height={150} />
         )}
       </ChartCard>
 

@@ -1,5 +1,6 @@
 import { addDays, diffDays, lastNDays, weekdayOf } from '../lib/dates'
-import type { LocalDate, TrackedItem, Urge } from '../db/types'
+import type { LocalDate, Reflection, Step, TrackedItem, Urge } from '../db/types'
+import { wellbeingInsights } from './wellbeing'
 import { abstinenceRate, dayOutcome, factorImpact, isHeld, type Snapshot } from './metrics'
 
 /**
@@ -38,6 +39,9 @@ export interface Insight {
 
 export interface InsightOptions {
   dateOf: (u: { at: string }) => LocalDate
+  /** Optional: reflections and steps toward needs, for the wellbeing facts. */
+  reflections?: Reflection[]
+  steps?: Step[]
   /** Window for factor analysis. */
   windowDays?: number
 }
@@ -644,6 +648,7 @@ export function buildInsights(s: Snapshot, o: InsightOptions & { persistDays?: n
     resistedFact(recentUrges),
     coverageFact(s),
     cleanRunFact(s),
+    ...wellbeingInsights(s, o.reflections ?? [], o.steps ?? [], o.dateOf),
   ].filter((x): x is Insight => x !== null)
 
   // If the same item has both a setback and an urge claim, keep the stronger one.

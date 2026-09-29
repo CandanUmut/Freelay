@@ -29,6 +29,18 @@ export function InsightRow({ i }: { i: Insight }) {
 }
 
 export function PatternFinder({ p }: { p: PatternProgress }) {
+  const enough = p.progress >= 0.95
+  if (enough)
+    return (
+      <div className="rounded-2xl border border-line p-4">
+        <Label>No clear pattern yet</Label>
+        <p className="mt-2 text-[14px] leading-relaxed text-ink/85">
+          There's enough data ({plural(p.days, 'day')}, {plural(p.urges, 'urge')} in 60 days), and nothing you track stands out clearly. That's information
+          too: your urges may not hang on one trigger, or something you don't track yet matters. Adding a boundary you suspect (a place, a time, a feeling)
+          is the quickest way to test it. This updates every day.
+        </p>
+      </div>
+    )
   return (
     <div className="rounded-2xl border border-line p-4">
       <div className="flex items-baseline justify-between">
@@ -36,7 +48,7 @@ export function PatternFinder({ p }: { p: PatternProgress }) {
         <span className="text-[13px] text-muted tabular-nums">{Math.round(p.progress * 100)}%</span>
       </div>
       <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-2" role="progressbar" aria-valuenow={Math.round(p.progress * 100)} aria-valuemin={0} aria-valuemax={100}>
-        <div className="h-full rounded-full bg-abstinence" style={{ width: `${Math.max(3, p.progress * 100)}%` }} />
+        <div className="h-full rounded-full bg-good" style={{ width: `${Math.max(3, p.progress * 100)}%` }} />
       </div>
       <p className="mt-3 text-[14px] leading-relaxed text-ink/85">
         {plural(p.days, 'day')} and {plural(p.urges, 'urge')} logged in the last 60 days. Reliable patterns usually need around {PATTERN_DAYS} days and{' '}
@@ -52,7 +64,7 @@ function Delta({ now, then, better = 'up', fmt = (x: number) => String(x) }: { n
   if (Math.abs(d) < 0.005) return <span className="text-muted"> · same as last week</span>
   const good = better === 'up' ? d > 0 : d < 0
   return (
-    <span className={good ? 'text-selfcare-ink' : 'text-muted'}>
+    <span className={good ? 'text-good-ink' : 'text-muted'}>
       {' '}
       · {d > 0 ? '+' : '−'}
       {fmt(Math.abs(d))} vs last week

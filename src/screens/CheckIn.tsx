@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { saveDay } from '../app/actions'
 import { useData } from '../app/data'
+import { useNav } from '../app/nav'
 import type { DayEntry, EntryValue, LocalDate, TrackedItem } from '../db/types'
 import { addDays } from '../lib/dates'
 import { checkInFeedback, withDay, type CheckInFeedback } from '../metrics/feedback'
@@ -13,8 +14,17 @@ const MOODS = ['Low', 'Flat', 'Okay', 'Good', 'Great'] as const
  * One screen, all three layers. The only required answer is abstinence;
  * untapped boundaries and self-care count as "didn't happen".
  */
+function AddHint({ text, onClick }: { text: string; onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className="mt-3 w-full rounded-2xl border border-dashed border-line p-4 text-left text-[14px] text-muted">
+      {text} <span className="text-ink underline underline-offset-4">Add some</span>
+    </button>
+  )
+}
+
 export function CheckIn({ date: dateProp, onClose }: { date?: LocalDate; onClose: () => void }) {
   const data = useData()
+  const nav = useNav()
   const date = dateProp ?? data.today
   const existing = data.dayByDate.get(date)
   const layer = (l: TrackedItem['layer']) => data.active.filter((i) => i.layer === l)
@@ -67,6 +77,21 @@ export function CheckIn({ date: dateProp, onClose }: { date?: LocalDate; onClose
   }
 
   const title = date === data.today ? 'Check-in' : date === addDays(data.today, -1) ? 'Yesterday' : formatDate(date)
+
+  if (abst.length === 0)
+    return (
+      <Screen title={title} onClose={onClose}>
+        <div className="pt-6">
+          <p className="text-[22px] font-semibold leading-snug">First, add what you're stepping away from.</p>
+          <p className="mt-3 leading-relaxed text-muted">
+            A check-in asks whether any of those happened today, so it needs at least one. Pick from suggestions or write your own; it takes a minute.
+          </p>
+          <Button variant="primary" className="mt-6 w-full" onClick={() => nav.replace({ kind: 'items' })}>
+            Choose what to track
+          </Button>
+        </div>
+      </Screen>
+    )
 
   if (phase === 'lapse')
     return (
@@ -122,6 +147,7 @@ export function CheckIn({ date: dateProp, onClose }: { date?: LocalDate; onClose
           <LayerTag layer="boundary" />
           <span className="text-[13px] text-muted">tap what happened</span>
         </div>
+        {bounds.length === 0 && <AddHint onClick={() => nav.push({ kind: 'items' })} text="No boundaries yet. They show what tends to come before a slip." />}
         <div className="mt-3 flex flex-wrap gap-2">
           {bounds.map((i) => (
             <Chip key={i.id} tone="boundary" selected={crossed.has(i.id)} onClick={() => toggle(crossed, setCrossed, i.id)}>
@@ -136,6 +162,7 @@ export function CheckIn({ date: dateProp, onClose }: { date?: LocalDate; onClose
           <LayerTag layer="selfcare" />
           <span className="text-[13px] text-muted">tap what you did</span>
         </div>
+        {care.length === 0 && <AddHint onClick={() => nav.push({ kind: 'items' })} text="No self care yet. Add the things that help you." />}
         <div className="mt-3 flex flex-wrap gap-2">
           {care
             .filter((i) => i.target?.type !== 'count')
@@ -218,7 +245,7 @@ function Counter({ item, value, onChange }: { item: TrackedItem; value: number |
   return (
     <div className="mt-3 flex items-center justify-between rounded-2xl bg-surface px-4 py-2">
       <div>
-        <div className={met ? 'text-selfcare-ink' : ''}>{item.name}</div>
+        <div className={met ? 'text-good-ink' : ''}>{item.name}</div>
         <div className="text-[13px] text-muted">target {target}{value === undefined ? ' · not entered' : ''}</div>
       </div>
       <div className="flex items-center gap-1">

@@ -6,6 +6,7 @@ import { weekdayOf } from '../../lib/dates'
 import { dayOutcome, isHeld } from '../../metrics/metrics'
 import { IconBack, IconChevron } from '../../ui/icons'
 import { LAYER, Segmented, formatDate, pct } from '../../ui/kit'
+import { MARKS } from '../../ui/theme'
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -96,19 +97,21 @@ export function Calendar() {
               if (layer === 'abstinence') {
                 const o = dayOutcome(data.dayByDate.get(d), absIds)
                 if (o === 'clean') {
-                  cls = 'text-white font-semibold'
-                  style = { background: LAYER.abstinence.hex }
+                  cls = 'bg-good text-white font-semibold'
                   label = 'clean'
                 } else if (o === 'setback') {
-                  cls = 'bg-setback text-white font-semibold'
+                  cls = 'bg-bad hatch text-white font-semibold'
                   label = 'setback'
                 }
               } else {
                 const sh = share(d)
                 if (sh !== null) {
-                  // One hue, more fill = more held. A floor keeps 0% visible as reported.
-                  style = { background: `color-mix(in srgb, ${LAYER[layer].hex} ${Math.round(18 + sh * 82)}%, #1b1c1e)` }
-                  cls = 'text-white font-semibold'
+                  // Diverging: red (little held) -> neutral -> green (all held).
+                  const toward = sh >= 0.5 ? MARKS.good : MARKS.bad
+                  const amount = Math.round(Math.abs(sh - 0.5) * 2 * 100)
+                  style = { background: `color-mix(in srgb, ${toward} ${Math.max(12, amount)}%, var(--color-empty))` }
+                  cls = amount >= 55 ? 'text-white font-semibold' : 'text-ink font-semibold'
+                  if (sh < 0.5) cls += ' hatch'
                   label = `${pct(sh)} held`
                 }
               }
@@ -138,17 +141,12 @@ export function Calendar() {
       <div className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[13px] text-muted">
         {layer === 'abstinence' ? (
           <>
-            <Legend swatch={<span className="size-3 rounded-full" style={{ background: LAYER.abstinence.hex }} />} label="clean" />
-            <Legend swatch={<span className="size-3 rounded-full bg-setback" />} label="setback" />
+            <Legend swatch={<span className="size-3 rounded-full bg-good" />} label="clean" />
+            <Legend swatch={<span className="hatch size-3 rounded-full bg-bad" />} label="setback" />
           </>
         ) : (
           <Legend
-            swatch={
-              <span
-                className="h-3 w-16 rounded-full"
-                style={{ background: `linear-gradient(90deg, color-mix(in srgb, ${LAYER[layer].hex} 18%, #1b1c1e), ${LAYER[layer].hex})` }}
-              />
-            }
+            swatch={<span className="h-3 w-16 rounded-full" style={{ background: `linear-gradient(90deg, ${MARKS.bad}, var(--color-empty), ${MARKS.good})` }} />}
             label={layer === 'boundary' ? 'fewer to more held' : 'fewer to more done'}
           />
         )}

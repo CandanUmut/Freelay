@@ -14,6 +14,8 @@ const TABLE_LABEL: Record<(typeof TABLES)[number], string> = {
   plans: 'plans',
   journal: 'journal entries',
   kv: 'settings rows',
+  reflections: 'reflections',
+  steps: 'steps toward needs',
 }
 
 export function DataSettings({ onClose }: { onClose: () => void }) {
@@ -129,12 +131,12 @@ export function DataSettings({ onClose }: { onClose: () => void }) {
 
       <section className="mt-10">
         <Label>Try it out</Label>
-        <p className="mt-1 text-[14px] leading-relaxed text-muted">Load 60 days of made-up data to see what the app shows once it has history. This replaces your days, urges, plans and journal.</p>
+        <p className="mt-1 text-[14px] leading-relaxed text-muted">Load 60 days of made-up data to see what the app shows once it has history. This replaces your days, urges, plans, journal, reflections and steps.</p>
         <Button
           variant="ghost"
           className="mt-3 w-full"
           onClick={async () => {
-            if (!confirm('Replace your days, urges, plans and journal with sample data?')) return
+            if (!confirm('Replace your days, urges, plans, journal, reflections and steps with sample data?')) return
             await loadFixture(db, data.today)
             setMessage('Sample data loaded.')
           }}

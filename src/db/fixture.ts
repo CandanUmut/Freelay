@@ -1,7 +1,7 @@
 import { addDays, lastNDays, weekdayOf } from '../lib/dates'
 import type { LedgerDB } from './db'
-import { ensureSeeded } from './seed'
-import type { DayEntry, JournalEntry, LocalDate, Plan, Urge } from './types'
+import { ensureSeeded, SEED_ITEMS } from './seed'
+import type { DayEntry, JournalEntry, LocalDate, Plan, Reflection, Step, Urge } from './types'
 
 /** Small seeded PRNG so the fixture is identical on every run. */
 function mulberry32(seed: number) {
@@ -19,6 +19,8 @@ export interface Fixture {
   urges: Urge[]
   plans: Plan[]
   journal: JournalEntry[]
+  reflections: Reflection[]
+  steps: Step[]
 }
 
 /**
@@ -35,7 +37,7 @@ export interface Fixture {
 export function buildFixture(today: LocalDate, days = 60, seed = 42, riskScale = 1): Fixture {
   const rnd = mulberry32(seed)
   const chance = (p: number) => rnd() < p
-  const out: Fixture = { days: [], urges: [], plans: [], journal: [] }
+  const out: Fixture = { days: [], urges: [], plans: [], journal: [], reflections: [], steps: [] }
   let shortNightYesterday = false
   let n = 0
 
@@ -108,6 +110,7 @@ export function buildFixture(today: LocalDate, days = 60, seed = 42, riskScale =
     { id: 'fx-plan-lonely', triggerItemIds: ['bnd-lonely', 'bnd-alone'], ifText: 'I notice I feel lonely', thenText: 'text one person or go for a 15 minute walk', timesUsed: 1, active: true },
   )
   out.journal.push({ id: 'fx-journal-1', at: `${addDays(today, -3)}T22:10:00`, text: 'Long day alone. Walked instead of scrolling.' })
+  addWellbeing(out, today, days, seed)
   return out
 }
 
@@ -115,12 +118,62 @@ export function buildFixture(today: LocalDate, days = 60, seed = 42, riskScale =
 export async function loadFixture(db: LedgerDB, today: LocalDate): Promise<Fixture> {
   const fx = buildFixture(today)
   await ensureSeeded(db)
-  await db.transaction('rw', [db.days, db.urges, db.plans, db.journal], async () => {
-    await Promise.all([db.days.clear(), db.urges.clear(), db.plans.clear(), db.journal.clear()])
+  // The sample data refers to the starter items; add any that are missing.
+  const have = new Set((await db.items.toArray()).map((i) => i.id))
+  await db.items.bulkAdd(SEED_ITEMS.filter((i) => !have.has(i.id)))
+  await db.transaction('rw', [db.days, db.urges, db.plans, db.journal, db.reflections, db.steps], async () => {
+    await Promise.all([db.days.clear(), db.urges.clear(), db.plans.clear(), db.journal.clear(), db.reflections.clear(), db.steps.clear()])
     await db.days.bulkAdd(fx.days)
     await db.urges.bulkAdd(fx.urges)
     await db.plans.bulkAdd(fx.plans)
     await db.journal.bulkAdd(fx.journal)
+    await db.reflections.bulkAdd(fx.reflections)
+    await db.steps.bulkAdd(fx.steps)
   })
   return fx
+}
+
+/**
+ * Needs on some urges, a reflection every three days that slowly improves,
+ * and a few steps. Uses its own PRNG so the core sample (and the tests built
+ * on it) stay identical.
+ */
+function addWellbeing(out: Fixture, today: LocalDate, days: number, seed: number) {
+  const rnd = mulberry32(seed + 1000)
+  const pick = <T,>(xs: T[]) => xs[Math.floor(rnd() * xs.length)]!
+  for (const u of out.urges) {
+    if (rnd() > 0.45) continue
+    const lonely = u.triggerItemIds.includes('bnd-lonely') || u.triggerItemIds.includes('bnd-alone')
+    const tired = u.triggerItemIds.includes('bnd-sleep')
+    u.needs = [lonely ? 'connection' : tired ? 'rest' : pick(['calm', 'rest', 'connection', 'fun'])]
+    u.promise = [pick(lonely ? ['comfort', 'wanted'] : ['escape', 'relief', 'switch-off'])]
+  }
+  const start = addDays(today, -(days - 1))
+  for (let d = 2; d < days; d += 3) {
+    const date = addDays(start, d)
+    const t = d / days
+    const r = (base: number) => Math.max(1, Math.min(5, Math.round(base + rnd() * 1.4 - 0.7)))
+    out.reflections.push({
+      id: `fx-refl-${d}`,
+      date,
+      at: `${date}T21:45:00`,
+      confidence: r(2 + t * 2),
+      compassion: r(2 + t * 1.5),
+      motivation: r(3.5),
+      connection: r(2.2 + t),
+      stress: r(3.8 - t * 1.5),
+      needs: rnd() < 0.5 ? [pick(['connection', 'rest', 'calm'])] : undefined,
+    })
+  }
+  const ways: [string, string][] = [
+    ['connection', 'Text or call one person'],
+    ['rest', 'Go to bed early tonight'],
+    ['calm', 'Slow breathing for 3 minutes'],
+    ['connection', 'Go where there are people (café, library, gym)'],
+  ]
+  for (let i = 0; i < 9; i++) {
+    const date = addDays(today, -Math.floor(rnd() * 20))
+    const [need, text] = pick(ways)
+    out.steps.push({ id: `fx-step-${i}`, at: `${date}T19:30:00`, need, text })
+  }
 }

@@ -6,6 +6,7 @@ import type { Plan, Urge } from '../db/types'
 import { localDateOf } from '../lib/dates'
 import { Button, Chip, Label, plural } from '../ui/kit'
 import { LapseView } from './Lapse'
+import { LookUnderneath } from './LookUnderneath'
 
 const PLACES = ['Bed', 'Home', 'Work', 'Out', 'Commute'] as const
 
@@ -124,6 +125,11 @@ export function LogUrge() {
 
       <section className="mt-6">
         <Label>What set it off?</Label>
+        {bounds.length === 0 && (
+          <p className="mt-2 text-[14px] text-muted">
+            Add boundaries in Settings → Tracked items to tag triggers with one tap. For now, describe it under "Something else".
+          </p>
+        )}
         <div className="mt-3 flex flex-wrap gap-2">
           {bounds.map((i) => (
             <Chip key={i.id} tone="boundary" selected={triggers.has(i.id)} onClick={() => toggleTrigger(i.id)}>
@@ -162,7 +168,7 @@ export function LogUrge() {
             type="button"
             aria-pressed={outcome === 'resisted'}
             onClick={() => setOutcome('resisted')}
-            className={`min-h-16 rounded-2xl border text-[17px] ${outcome === 'resisted' ? 'border-selfcare bg-selfcare font-semibold text-bg' : 'border-line bg-surface'}`}
+            className={`min-h-16 rounded-2xl border text-[17px] ${outcome === 'resisted' ? 'border-good bg-good font-semibold text-white' : 'border-line bg-surface'}`}
           >
             Resisted
           </button>
@@ -224,7 +230,7 @@ function UrgeResult({ saved, onPanic, onDone }: { saved: Saved; onPanic: () => v
     <div className="px-4 pb-6 pt-4">
       {resisted ? (
         <>
-          <Label className="text-selfcare-ink">Resisted</Label>
+          <Label className="text-good-ink">Resisted</Label>
           <p className="mt-3 text-[28px] font-semibold leading-tight">That counts. It's the most useful thing you can record.</p>
           <p className="mt-4 text-lg">
             <span className="font-semibold tabular-nums">{saved.resistedTotal}</span> {saved.resistedTotal === 1 ? 'urge' : 'urges'} resisted in total.
@@ -242,6 +248,8 @@ function UrgeResult({ saved, onPanic, onDone }: { saved: Saved; onPanic: () => v
         Intensity {urge.intensity}
         {cmp && saved.avgIntensity !== null && `, ${cmp} (${saved.avgIntensity.toFixed(1)})`}.
       </p>
+
+      <LookUnderneath urgeId={urge.id} />
 
       {saved.plans.length > 0 && (
         <section className="mt-6">
