@@ -1,10 +1,11 @@
 import { addDays, diffDays, lastNDays } from '../lib/dates'
-import type { LocalDate, Meta, Plan, Settings } from '../db/types'
+import type { LocalDate, Meta, Plan, Reflection, Settings } from '../db/types'
 import { dayOutcome, riskWindow, setbackDates, topFactors, type Snapshot } from '../metrics/metrics'
 import { lessonById, type Lesson } from './lessons'
 
 export interface Ctx {
   s: Snapshot
+  reflections?: Reflection[]
   plans: Plan[]
   settings: Settings
   meta: Meta
@@ -138,6 +139,25 @@ const RULES: [string, Rule][] = [
   [
     'replacement',
     (c) => (!c.settings.replacementHabit && c.s.days.length >= 7 ? 'A week of check-ins in. Time to name one replacement habit.' : null),
+  ],
+  [
+    'needs',
+    (c) => {
+      const n = c.s.urges.length
+      const withNeeds = c.s.urges.filter((u) => u.needs?.length).length
+      return n >= 5 && withNeeds === 0 ? `You've logged ${n} urges. What are they really about?` : null
+    },
+  ],
+  [
+    'confidence',
+    (c) => {
+      const last = c.reflections?.at(-1)
+      if (!last) return null
+      if ((last.compassion ?? 5) <= 2) return 'You said you’ve been hard on yourself lately.'
+      if ((last.confidence ?? 5) <= 2) return 'You said your confidence is low right now.'
+      if ((last.motivation ?? 5) <= 2) return 'You said motivation is low right now.'
+      return null
+    },
   ],
   ['rates', (c) => (c.s.days.length >= 1 && c.s.days.length <= 7 ? 'Why the headline number is a rate.' : null)],
   ['dopamine', (c) => (c.s.urges.length >= 3 && c.s.days.length <= 21 ? `You've logged ${c.s.urges.length} urges. Here's what's behind them.` : null)],

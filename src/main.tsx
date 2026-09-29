@@ -6,7 +6,11 @@ import { NavProvider } from './app/nav'
 import { db } from './db/db'
 import { ensureSeeded } from './db/seed'
 import { LockScreen } from './screens/Lock'
+import { Onboarding } from './screens/Onboarding'
 import './index.css'
+import { applyStoredTheme } from './ui/theme'
+
+applyStoredTheme()
 
 // Ask the browser not to evict IndexedDB under storage pressure. Not guaranteed on iOS.
 void navigator.storage?.persist?.()
@@ -21,7 +25,7 @@ window.addEventListener('pageshow', () => cover(false))
 const RELOCK_AFTER_MS = 60_000
 
 function Gate() {
-  const { settings } = useData()
+  const { settings, meta, items } = useData()
   // Locked at launch only if a PIN was already set; turning the PIN on doesn't lock you out mid-session.
   const [unlocked, setUnlocked] = useState(() => !(settings.pinEnabled && settings.pinHash))
   const hiddenAt = useRef<number | null>(null)
@@ -36,6 +40,7 @@ function Gate() {
   }, [])
 
   if (settings.pinEnabled && settings.pinHash && !unlocked) return <LockScreen settings={settings} onUnlock={() => setUnlocked(true)} />
+  if (!meta.onboarded && items.length === 0) return <Onboarding />
   return <App />
 }
 

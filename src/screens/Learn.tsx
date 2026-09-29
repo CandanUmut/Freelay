@@ -10,6 +10,7 @@ import { Label, Screen, Segmented } from '../ui/kit'
 
 const GROUPS: { title: string; ids: string[] }[] = [
   { title: 'Your brain', ids: ['dopamine', 'wanting-liking', 'extinction'] },
+  { title: 'What you really need', ids: ['needs', 'confidence'] },
   { title: 'Urges', ids: ['urge-surfing', 'urge-anatomy', 'if-then'] },
   { title: 'Habits and environment', ids: ['habits', 'replacement', 'environment', 'phone-in-bed'] },
   { title: 'Upstream conditions', ids: ['sleep', 'halt', 'loneliness'] },
@@ -21,7 +22,7 @@ export function Learn() {
   const data = useData()
   const nav = useNav()
   const [tab, setTab] = useState<'lessons' | 'reading'>('lessons')
-  const suggestion = suggestLesson({ s: data.snapshot, plans: data.plans, settings: data.settings, meta: data.meta, dateOf: data.dateOf })
+  const suggestion = suggestLesson({ s: data.snapshot, plans: data.plans, settings: data.settings, meta: data.meta, dateOf: data.dateOf, reflections: data.reflections })
   const grouped = new Set(GROUPS.flatMap((g) => g.ids))
   const groups = [...GROUPS, { title: 'More', ids: LESSONS.filter((l) => !grouped.has(l.id)).map((l) => l.id) }].filter((g) => g.ids.length)
 
@@ -116,7 +117,7 @@ export function SourceCard({ s }: { s: Source }) {
     <div className="rounded-2xl bg-surface p-4">
       <div className="flex items-center gap-2 text-[12px] text-muted">
         <span className="rounded-full border border-line px-2 py-0.5">{KIND_LABEL[s.kind]}</span>
-        {free && <span className="rounded-full border border-selfcare/60 px-2 py-0.5 text-ink/90">free</span>}
+        {free && <span className="rounded-full border border-good/60 px-2 py-0.5 text-ink/90">free</span>}
       </div>
       <a href={s.url} target="_blank" rel="noopener noreferrer" className="mt-2 block text-[16px] font-medium leading-snug underline decoration-line underline-offset-4">
         {s.title}

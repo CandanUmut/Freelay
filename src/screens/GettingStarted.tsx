@@ -40,7 +40,7 @@ export function GettingStarted() {
             <button type="button" onClick={s.go} disabled={s.done} className="flex min-h-14 w-full items-center gap-3 text-left disabled:opacity-50">
               <span
                 aria-hidden
-                className={`grid size-6 shrink-0 place-items-center rounded-full border text-[13px] ${s.done ? 'border-selfcare bg-selfcare text-bg' : 'border-muted'}`}
+                className={`grid size-6 shrink-0 place-items-center rounded-full border text-[13px] ${s.done ? 'border-good bg-good text-white' : 'border-muted'}`}
               >
                 {s.done ? '✓' : ''}
               </span>

@@ -1,6 +1,6 @@
 import { isValidLocalDate } from '../lib/dates'
 import { SCHEMA_VERSION, TABLES, type LedgerDB, type TableName } from './db'
-import type { DayEntry, JournalEntry, KvRow, Plan, TrackedItem, Urge } from './types'
+import type { DayEntry, JournalEntry, KvRow, Plan, Reflection, Step, TrackedItem, Urge } from './types'
 
 export const APP_ID = 'ledger'
 
@@ -15,6 +15,8 @@ export interface ExportFile {
     plans: Plan[]
     journal: JournalEntry[]
     kv: KvRow[]
+    reflections: Reflection[]
+    steps: Step[]
   }
 }
 
@@ -30,6 +32,8 @@ export async function exportAll(db: LedgerDB): Promise<ExportFile> {
       plans: await db.plans.toArray(),
       journal: await db.journal.toArray(),
       kv: await db.kv.toArray(),
+      reflections: await db.reflections.toArray(),
+      steps: await db.steps.toArray(),
     },
   }))
 }
@@ -47,7 +51,9 @@ const rowChecks: Record<TableName, (r: Record<string, unknown>) => boolean> = {
   urges: (r) => isStr(r.id) && isStr(r.at) && typeof r.intensity === 'number' && (r.outcome === 'resisted' || r.outcome === 'acted'),
   plans: (r) => isStr(r.id) && Array.isArray(r.triggerItemIds) && isStr(r.ifText) && isStr(r.thenText),
   journal: (r) => isStr(r.id) && isStr(r.at) && isStr(r.text),
-  kv: (r) => (r.key === 'settings' || r.key === 'lapsePlan' || r.key === 'meta') && isObj(r.value),
+  kv: (r) => ['settings', 'lapsePlan', 'meta', 'needs'].includes(r.key as string) && isObj(r.value),
+  reflections: (r) => isStr(r.id) && isValidLocalDate(r.date),
+  steps: (r) => isStr(r.id) && isStr(r.at) && isStr(r.need) && isStr(r.text),
 }
 
 /** Parse and validate an export file. Throws ImportError with a readable reason. */

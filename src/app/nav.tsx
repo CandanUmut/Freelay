@@ -14,6 +14,7 @@ export type Overlay =
   | { kind: 'settings' }
   | { kind: 'items' }
   | { kind: 'data' }
+  | { kind: 'reflect' }
 
 interface Nav {
   tab: Tab

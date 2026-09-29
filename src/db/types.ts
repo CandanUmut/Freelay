@@ -52,7 +52,44 @@ export interface Urge {
   note?: string
   /** For acted urges: how much it was actually enjoyed, 1-10, rated afterwards. */
   enjoyed?: number
+  /** What the urge seemed to promise (ids from content/needs.ts PROMISES). */
+  promise?: string[]
+  /** What was actually needed underneath (ids from content/needs.ts NEEDS). */
+  needs?: string[]
 }
+
+/** A short check on how things are going, asked every few days. Scores are 1..5. */
+export interface Reflection {
+  id: string
+  date: LocalDate
+  at: string
+  /** Confident I can handle urges this week. */
+  confidence?: number
+  /** Treating myself with kindness / forgiveness after slips. */
+  compassion?: number
+  /** How much I want this change right now. */
+  motivation?: number
+  /** Feeling connected to people. */
+  connection?: number
+  /** Stress (higher = more stressed). */
+  stress?: number
+  /** What there's been a need for lately (ids from content/needs.ts NEEDS). */
+  needs?: string[]
+  note?: string
+}
+
+export type ReflectionKey = 'confidence' | 'compassion' | 'motivation' | 'connection' | 'stress'
+
+/** Something done toward a real need. */
+export interface Step {
+  id: string
+  at: string
+  need: string
+  text: string
+}
+
+/** Need id -> the user's own healthier ways of meeting it. */
+export type NeedMap = Record<string, string[]>
 
 export interface Plan {
   id: string
@@ -82,13 +119,13 @@ export interface Settings {
   biometricCredId?: string
   replacementHabit?: string
   habitStartDate?: LocalDate
-  theme: 'dark'
+  theme: 'light' | 'dark' | 'system'
 }
 
 export const DEFAULT_SETTINGS: Settings = {
   dayBoundaryHour: 4,
   pinEnabled: false,
-  theme: 'dark',
+  theme: 'light',
 }
 
 /** Small app state that isn't user data proper but should survive a restore. */
@@ -107,6 +144,10 @@ export interface Meta {
   /** Getting-started checklist: items reviewed, and whether the card was dismissed. */
   itemsReviewed?: boolean
   setupDismissed?: boolean
+  /** First-run setup finished or skipped. */
+  onboarded?: boolean
+  /** Local date the reflection prompt was last set aside. */
+  reflectionSkipped?: LocalDate
 }
 
 export const DEFAULT_META: Meta = { lessonsRead: {}, lessonsDismissed: {}, insightsShown: {} }
@@ -116,3 +157,4 @@ export type KvRow =
   | { key: 'settings'; value: Settings }
   | { key: 'lapsePlan'; value: LapsePlan }
   | { key: 'meta'; value: Meta }
+  | { key: 'needs'; value: NeedMap }

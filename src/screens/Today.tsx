@@ -1,5 +1,6 @@
-import { useEffect, useMemo } from 'react'
-import { dismissLesson } from '../app/actions'
+import { useEffect, useMemo, useState } from 'react'
+import { addStep, dismissLesson } from '../app/actions'
+import { needById } from '../content/needs'
 import { useData } from '../app/data'
 import { useNav } from '../app/nav'
 import { suggestLesson } from '../content/triggers'
@@ -10,6 +11,7 @@ import { addDays, diffDays } from '../lib/dates'
 import { abstinenceRate, dayOutcome, layerRate, riskWindow, setbackDates, streaks, totalCleanDays } from '../metrics/metrics'
 import { buildInsights, isReviewDay, patternProgress, pickInsight, weekReview } from '../metrics/insights'
 import { forwardTarget, riskText } from '../metrics/targets'
+import { needSummary, reflectionDue, stepSummary } from '../metrics/wellbeing'
 import { InsightRow, WeekReviewCard } from '../ui/insight'
 import { GettingStarted } from './GettingStarted'
 import { IconChevron, IconLog, IconPen, IconSettings, IconWave } from '../ui/icons'
@@ -21,6 +23,9 @@ export function Today() {
   const { snapshot: s, today, settings, meta } = data
 
   const r30 = abstinenceRate(s)
+  // Coverage counts from the first check-in, so a new user isn't told they reported "3%".
+  const firstDay = s.days.map((d) => d.date).sort()[0]
+  const coverage = firstDay ? r30.reported / Math.min(30, diffDays(firstDay, today) + 1) : 1
   const st = streaks(s)
   const total = totalCleanDays(s)
   // For people with frequent urges (OCD-type checking especially), resisting is the daily win the clean-day rate can't show.
@@ -35,11 +40,23 @@ export function Today() {
   const yesterdayMissing = s.days.length > 0 && dayOutcome(data.dayByDate.get(yesterday), absIds) === undefined
   const lastSetback = setbackDates(s).at(-1)
   const showLapse = lastSetback !== undefined && diffDays(lastSetback, today) <= 1 && meta.lapseSeenFor !== lastSetback
-  const lesson = suggestLesson({ s, plans: data.plans, settings, meta, dateOf: data.dateOf })
-  const insights = useMemo(() => buildInsights(s, { dateOf: data.dateOf }), [s, data.dateOf])
+  const lesson = suggestLesson({ s, plans: data.plans, settings, meta, dateOf: data.dateOf, reflections: data.reflections })
+  const insights = useMemo(
+    () => buildInsights(s, { dateOf: data.dateOf, reflections: data.reflections, steps: data.steps }),
+    [s, data.dateOf, data.reflections, data.steps],
+  )
   const card = pickInsight(insights, meta.insightsShown ?? {}, today)
   const review = isReviewDay(s) && meta.reviewSeen !== today ? weekReview(s, data.dateOf) : null
   const progress = patternProgress(s, data.dateOf, insights)
+  const reflectDue = reflectionDue(s, data.reflections, meta.reflectionSkipped)
+  // A step card once there's something to go on: the most common need from urges and reflections.
+  const needs = needSummary(s.urges, data.reflections, data.dateOf, today).needs
+  const topNeed = needs[0] && needs[0].n >= 2 ? needById(needs[0].id) : undefined
+  const topNeedWays = topNeed ? (data.needMap[topNeed.id]?.length ? data.needMap[topNeed.id]! : topNeed.ways) : []
+  // Rotate the suggested way daily so it isn't always the same line.
+  const topNeedWay = topNeedWays.length ? topNeedWays[Number(today.slice(8)) % topNeedWays.length] : undefined
+  const stepsWeek = stepSummary(data.steps, today).total
+  const [stepDone, setStepDone] = useState(false)
 
   // Remember which insight Today showed, so tomorrow's card is a different one.
   useEffect(() => {
@@ -68,8 +85,8 @@ export function Today() {
           {r30.reported > 0 ? (
             <>
               clean over the last 30 days · {r30.clean} of {plural(r30.reported, 'reported day')}
-              {r30.coverage < 0.9 && <>, {pct(r30.coverage)} reported</>}
-              {r30.coverage < 0.7 && r30.reported >= 7 && (
+              {coverage < 0.9 && <>, {pct(coverage)} reported</>}
+              {coverage < 0.7 && r30.reported >= 7 && (
                 <span className="mt-1 block text-[14px]">
                   With this many days missing, the rate is probably flattering: unrecorded days are often the harder ones. Missed days can be filled in from
                   the calendar.
@@ -97,8 +114,8 @@ export function Today() {
       </Card>
 
       {risk && (
-        <div className="mt-3 rounded-3xl border border-abstinence/40 p-5">
-          <Label className="text-abstinence-ink">Risk window</Label>
+        <div className="mt-3 rounded-3xl border border-boundary/50 p-5">
+          <Label className="text-boundary-ink">Risk window</Label>
           <p className="mt-2 leading-relaxed">{risk}</p>
         </div>
       )}
@@ -147,6 +164,43 @@ export function Today() {
 
       <GettingStarted />
 
+      {reflectDue && (
+        <div className="mt-6 rounded-3xl bg-surface p-5">
+          <Label>How are things?</Label>
+          <p className="mt-2 leading-snug">Confidence, self-forgiveness, motivation, connection, stress. About 30 seconds.</p>
+          <div className="mt-3 flex gap-2">
+            <button type="button" className="min-h-11 rounded-xl bg-ink px-4 font-semibold text-bg" onClick={() => nav.push({ kind: 'reflect' })}>
+              Reflect
+            </button>
+            <button type="button" className="min-h-11 px-3 text-muted" onClick={() => saveMeta(db, { reflectionSkipped: today })}>
+              Not today
+            </button>
+          </div>
+        </div>
+      )}
+
+      {topNeed && (
+        <div className="mt-6 rounded-3xl bg-surface p-5">
+          <Label>What you've been needing</Label>
+          <p className="mt-2 leading-snug">
+            Lately it's been <span className="font-semibold">{topNeed.label.toLowerCase()}</span>. One small step today:
+          </p>
+          <button
+            type="button"
+            disabled={stepDone}
+            onClick={async () => {
+              await addStep(topNeed.id, topNeedWay!)
+              setStepDone(true)
+            }}
+            className={`mt-3 flex min-h-12 w-full items-center justify-between gap-3 rounded-xl px-4 text-left ${stepDone ? 'bg-good/15' : 'bg-surface-2'}`}
+          >
+            <span>{topNeedWay}</span>
+            <span className="shrink-0 text-[13px] text-muted">{stepDone ? 'logged' : 'did this'}</span>
+          </button>
+          {stepsWeek > 0 && <p className="mt-2 text-[13px] text-muted">{stepsWeek} {stepsWeek === 1 ? 'step' : 'steps'} toward your needs this week.</p>}
+        </div>
+      )}
+
       {review && (
         <div className="mt-6">
           <WeekReviewCard r={review} onDismiss={() => saveMeta(db, { reviewSeen: today })} />
@@ -159,10 +213,10 @@ export function Today() {
           <div className="mt-2 text-[17px]">
             <InsightRow i={card} />
           </div>
-          {!progress.ready && s.days.length >= 3 && (
+          {!progress.ready && s.days.length >= 3 && progress.progress < 0.95 && (
             <div className="mt-4 flex items-center gap-3 text-[13px] text-muted">
               <span className="h-1 flex-1 overflow-hidden rounded-full bg-surface-2">
-                <span className="block h-full rounded-full bg-abstinence" style={{ width: `${Math.max(3, progress.progress * 100)}%` }} />
+                <span className="block h-full rounded-full bg-good" style={{ width: `${Math.max(3, progress.progress * 100)}%` }} />
               </span>
               pattern finder {Math.round(progress.progress * 100)}%
             </div>

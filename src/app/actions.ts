@@ -1,6 +1,6 @@
 import { db, newId } from '../db/db'
 import { saveMeta } from '../db/seed'
-import type { DayEntry, JournalEntry, Layer, LocalDate, Plan, TrackedItem, Urge } from '../db/types'
+import type { DayEntry, JournalEntry, Layer, LocalDate, NeedMap, Plan, Reflection, TrackedItem, Urge } from '../db/types'
 
 /** Write a full check-in for a date. Entries replace whatever was there. */
 export async function saveDay(
@@ -66,6 +66,28 @@ export async function saveJournal(j: { id?: string; text: string; at?: string; t
 }
 export const deleteJournal = (id: string) => db.journal.delete(id)
 
+/** Add items chosen from suggestions (keeping their stable ids) or typed by the person. */
+export async function addItems(list: { id?: string; layer: Layer; name: string; target?: TrackedItem['target'] }[]): Promise<void> {
+  await db.transaction('rw', db.items, async () => {
+    const existing = await db.items.toArray()
+    const have = new Set(existing.map((i) => i.id))
+    const next = new Map<Layer, number>()
+    for (const i of existing) next.set(i.layer, Math.max(next.get(i.layer) ?? 0, i.sortOrder + 1))
+    for (const it of list) {
+      const id = it.id ?? newId()
+      if (have.has(id)) {
+        // Previously archived: bring it back rather than duplicating.
+        await db.items.update(id, { active: true })
+        continue
+      }
+      const sortOrder = next.get(it.layer) ?? 0
+      next.set(it.layer, sortOrder + 1)
+      await db.items.add({ id, layer: it.layer, name: it.name.trim(), active: true, sortOrder, target: it.target })
+      have.add(id)
+    }
+  })
+}
+
 export async function addItem(layer: Layer, name: string): Promise<void> {
   const same = await db.items.where('layer').equals(layer).toArray()
   const sortOrder = same.reduce((m, i) => Math.max(m, i.sortOrder), -1) + 1
@@ -99,3 +121,18 @@ export const markLessonRead = async (id: string, today: LocalDate, read: Record<
   saveMeta(db, { lessonsRead: { ...read, [id]: today } })
 export const dismissLesson = async (id: string, today: LocalDate, dismissed: Record<string, LocalDate>) =>
   saveMeta(db, { lessonsDismissed: { ...dismissed, [id]: today } })
+
+export async function saveReflection(r: Omit<Reflection, 'id' | 'at'>): Promise<Reflection> {
+  const row: Reflection = { ...r, id: newId(), at: new Date().toISOString(), note: r.note?.trim() || undefined }
+  await db.reflections.add(row)
+  return row
+}
+
+export async function addStep(need: string, text: string): Promise<void> {
+  await db.steps.add({ id: newId(), at: new Date().toISOString(), need, text })
+}
+export const deleteStep = (id: string) => db.steps.delete(id)
+
+export async function saveNeedWays(need: string, ways: string[], current: NeedMap): Promise<void> {
+  await db.kv.put({ key: 'needs', value: { ...current, [need]: ways.map((w) => w.trim()).filter(Boolean) } })
+}

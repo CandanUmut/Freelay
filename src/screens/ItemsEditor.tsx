@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { addItem, deleteItem, itemIsUsed, moveItem, updateItem } from '../app/actions'
+import { addItem, addItems, deleteItem, itemIsUsed, moveItem, updateItem } from '../app/actions'
+import { suggestionsFor } from '../content/suggestions'
 import { useData } from '../app/data'
 import { db } from '../db/db'
 import { saveMeta } from '../db/seed'
@@ -48,6 +49,7 @@ export function ItemsEditor({ onClose }: { onClose: () => void }) {
               ))}
               <AddRow layer={layer} />
             </ul>
+            <SuggestionRow layer={layer} have={new Set(list.map((i) => i.id))} />
             {archived.length > 0 && (
               <ul className="mt-2 space-y-1">
                 {archived.map((i) => (
@@ -203,5 +205,29 @@ function AddRow({ layer }: { layer: Layer }) {
         <IconPlus className="size-5" />
       </button>
     </li>
+  )
+}
+
+/** Suggestions not yet added; one tap adds (or restores) the item. */
+function SuggestionRow({ layer, have }: { layer: Layer; have: Set<string> }) {
+  const options = suggestionsFor(layer, [], have).slice(0, 12)
+  if (!options.length) return null
+  return (
+    <div className="mt-3">
+      <p className="text-[13px] text-muted">Suggestions</p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {options.map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            onClick={() => addItems([{ id: s.id, layer, name: s.name, target: s.target }])}
+            className="inline-flex min-h-10 items-center gap-1 rounded-full border border-dashed border-line px-3 text-[14px] text-ink/80 active:opacity-60"
+          >
+            <IconPlus className="size-4" />
+            {s.name}
+          </button>
+        ))}
+      </div>
+    </div>
   )
 }

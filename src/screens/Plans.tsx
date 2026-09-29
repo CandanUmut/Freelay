@@ -7,6 +7,7 @@ import type { Plan } from '../db/types'
 import { HABIT_DAYS, habitProgress } from '../metrics/targets'
 import { IconDown, IconPlus, IconUp } from '../ui/icons'
 import { Button, Chip, Empty, Label, plural } from '../ui/kit'
+import { NeedsSection } from './NeedsSection'
 
 export function Plans() {
   const data = useData()
@@ -53,6 +54,7 @@ export function Plans() {
         </ul>
       </section>
 
+      <NeedsSection />
       <LapseEditor />
       <HabitEditor />
     </div>
@@ -112,7 +114,7 @@ function PlanEditor({ plan, onDone }: { plan?: Plan; onDone: () => void }) {
       <p className="mt-2 text-[13px] leading-snug text-muted">Make the "then" one action you can start in under a minute.</p>
       {plan && (
         <label className="mt-3 flex min-h-11 items-center gap-3">
-          <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} className="size-5 accent-[#ecebe8]" />
+          <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} className="size-5 accent-[var(--color-ink)]" />
           Active
         </label>
       )}
@@ -260,7 +262,7 @@ function HabitEditor() {
           <div className="mt-3 rounded-2xl bg-surface p-4">
             <p className="text-[19px] font-semibold">{progress.name}</p>
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-2">
-              <div className="h-full rounded-full bg-selfcare" style={{ width: `${Math.min(100, (progress.day / HABIT_DAYS) * 100)}%` }} />
+              <div className="h-full rounded-full bg-good" style={{ width: `${Math.min(100, (progress.day / HABIT_DAYS) * 100)}%` }} />
             </div>
             <p className="mt-2 text-[14px] text-muted">
               Day {progress.day} of {HABIT_DAYS}. Sixty-six days is the median for a daily habit to become automatic; anywhere from 18 to 254 is normal.

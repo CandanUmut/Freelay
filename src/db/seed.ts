@@ -1,7 +1,11 @@
 import type { LedgerDB } from './db'
 import { DEFAULT_META, DEFAULT_SETTINGS, type LapsePlan, type Meta, type Settings, type TrackedItem } from './types'
 
-/** Seed ids are stable slugs so fixtures, lessons and tests can refer to them. */
+/**
+ * The original starter items. No longer added automatically (new users pick
+ * from suggestions in content/suggestions.ts); kept for the sample data,
+ * tests and simulator. Ids are stable slugs that lesson rules refer to.
+ */
 export const SEED_ITEMS: TrackedItem[] = [
   { id: 'abs-sites', layer: 'abstinence', name: 'Explicit websites', active: true, sortOrder: 0 },
   { id: 'abs-social', layer: 'abstinence', name: 'Explicit social media content', active: true, sortOrder: 1 },
@@ -30,10 +34,9 @@ export const DEFAULT_LAPSE_PLAN: LapsePlan = {
   ],
 }
 
-/** Idempotent: only seeds an empty database. */
+/** Idempotent. Creates settings and the default lapse plan; tracked items are the user's to choose. */
 export async function ensureSeeded(db: LedgerDB): Promise<void> {
-  await db.transaction('rw', db.items, db.kv, async () => {
-    if ((await db.items.count()) === 0) await db.items.bulkAdd(SEED_ITEMS)
+  await db.transaction('rw', db.kv, async () => {
     if (!(await db.kv.get('settings'))) await db.kv.put({ key: 'settings', value: DEFAULT_SETTINGS })
     if (!(await db.kv.get('lapsePlan'))) await db.kv.put({ key: 'lapsePlan', value: DEFAULT_LAPSE_PLAN })
   })

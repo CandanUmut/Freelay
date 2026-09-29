@@ -1,11 +1,13 @@
 import type { ReactNode } from 'react'
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { useData } from '../../app/data'
 import { formatDate } from '../../ui/kit'
 
-// Recessive chart chrome: hairline solid grid, muted axis text, ink tooltips.
-const GRID = '#2e3034'
-const AXIS = { fill: '#9b9994', fontSize: 11 }
-const SURFACE = '#1b1c1e'
+// Recessive chart chrome from the active theme: hairline solid grid, muted axis text.
+function useChrome() {
+  const { palette } = useData()
+  return { GRID: palette.line, AXIS: { fill: palette.muted, fontSize: 11 }, SURFACE: palette.surface, CURSOR: palette.muted }
+}
 
 export interface Series {
   key: string
@@ -57,6 +59,7 @@ export function TrendLines<T extends { date: string }>({
   domain?: [number, number]
   height?: number
 }) {
+  const { GRID, AXIS, SURFACE, CURSOR } = useChrome()
   return (
     <div style={{ height }} className="-ml-2">
       <ResponsiveContainer width="100%" height="100%">
@@ -65,7 +68,7 @@ export function TrendLines<T extends { date: string }>({
           <XAxis dataKey="date" tickFormatter={shortDate} tick={AXIS} axisLine={false} tickLine={false} minTickGap={24} />
           <YAxis domain={domain} tickFormatter={format} tick={AXIS} axisLine={false} tickLine={false} width={40} />
           <Tooltip
-            cursor={{ stroke: '#9b9994', strokeWidth: 1 }}
+            cursor={{ stroke: CURSOR, strokeWidth: 1 }}
             content={({ active, payload, label }) =>
               active && payload?.length ? (
                 <TooltipBox
@@ -101,6 +104,7 @@ export function TrendLines<T extends { date: string }>({
 
 /** Stacked weekly columns with a 2px surface gap between segments. */
 export function StackedColumns<T extends { date: string }>({ data, series, height = 170 }: { data: T[]; series: Series[]; height?: number }) {
+  const { GRID, AXIS, SURFACE } = useChrome()
   return (
     <div style={{ height }} className="-ml-2">
       <ResponsiveContainer width="100%" height="100%">
@@ -109,7 +113,7 @@ export function StackedColumns<T extends { date: string }>({ data, series, heigh
           <XAxis dataKey="date" tickFormatter={shortDate} tick={AXIS} axisLine={false} tickLine={false} minTickGap={24} />
           <YAxis allowDecimals={false} tick={AXIS} axisLine={false} tickLine={false} width={40} />
           <Tooltip
-            cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+            cursor={{ fill: 'color-mix(in srgb, var(--color-ink) 5%, transparent)' }}
             content={({ active, payload, label }) =>
               active && payload?.length ? (
                 <TooltipBox

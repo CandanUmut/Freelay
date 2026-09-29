@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react'
 import { deleteUrge } from '../../app/actions'
 import { useData } from '../../app/data'
 import type { Urge } from '../../db/types'
-import { Chip, Empty, LAYER, Label, formatDate, formatTime, plural } from '../../ui/kit'
+import { Chip, Empty, Label, formatDate, formatTime, plural } from '../../ui/kit'
+import { MARKS } from '../../ui/theme'
 
 type Outcome = 'all' | Urge['outcome']
 type TimeBucket = 'all' | 'morning' | 'afternoon' | 'evening' | 'night'
@@ -112,7 +113,7 @@ export function Urges() {
                     onClick={() => setCell(cell?.d === d && cell.h === h ? null : { d, h })}
                     className={`aspect-square rounded-[3px] ${cell?.d === d && cell.h === h ? 'ring-1 ring-ink' : ''}`}
                     style={{
-                      background: n ? `color-mix(in srgb, ${LAYER.abstinence.hex} ${Math.round(25 + (n / max) * 75)}%, #26282b)` : '#232427',
+                      background: n ? `color-mix(in srgb, ${MARKS.boundary} ${Math.round(25 + (n / max) * 75)}%, var(--color-empty))` : 'var(--color-empty)',
                     }}
                   />
                 ))}
@@ -145,7 +146,7 @@ export function Urges() {
                     <div className="flex items-center gap-3">
                       <span
                         className="size-2.5 shrink-0 rounded-full"
-                        style={{ background: u.outcome === 'resisted' ? LAYER.selfcare.hex : '#74777d' }}
+                        style={{ background: u.outcome === 'resisted' ? MARKS.good : MARKS.bad }}
                         aria-hidden
                       />
                       <span className="tabular-nums">{formatTime(u.at)}</span>

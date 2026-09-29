@@ -6,7 +6,7 @@ import { saveSettings } from '../db/seed'
 import { biometricAvailable, registerBiometric } from '../lib/biometric'
 import { hashPin, isValidPin, verifyPin } from '../lib/pin'
 import { IconChevron } from '../ui/icons'
-import { Label, Screen } from '../ui/kit'
+import { Label, Screen, Segmented } from '../ui/kit'
 import { PinPad } from './Lock'
 
 export function SettingsScreen({ onClose }: { onClose: () => void }) {
@@ -59,6 +59,20 @@ export function SettingsScreen({ onClose }: { onClose: () => void }) {
     <Screen title="Settings" onClose={onClose}>
       <Row label="Tracked items" sub="Rename, add, archive, set targets" onClick={() => nav.push({ kind: 'items' })} />
       <Row label="Data and backup" sub="Export, import, sample data" onClick={() => nav.push({ kind: 'data' })} />
+
+      <section className="mt-8">
+        <Label>Appearance</Label>
+        <Segmented
+          className="mt-3"
+          value={settings.theme}
+          onChange={(theme) => saveSettings(db, { theme })}
+          options={[
+            { value: 'light', label: 'Light' },
+            { value: 'dark', label: 'Dark' },
+            { value: 'system', label: 'Match phone' },
+          ]}
+        />
+      </section>
 
       <section className="mt-8">
         <Label>Day starts at</Label>
@@ -141,7 +155,7 @@ function ToggleRow({ label, sub, on, onToggle }: { label: string; sub: string; o
         <span className="block">{label}</span>
         <span className="text-[13px] leading-snug text-muted">{sub}</span>
       </span>
-      <span className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${on ? 'bg-selfcare' : 'bg-surface-2'}`}>
+      <span className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${on ? 'bg-good' : 'bg-surface-2'}`}>
         <span className={`absolute top-0.5 size-6 rounded-full bg-ink transition-all ${on ? 'left-[22px]' : 'left-0.5'}`} />
       </span>
     </button>
