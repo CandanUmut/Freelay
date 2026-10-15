@@ -1,0 +1,69 @@
+# How Freelay works
+
+Details behind the app: what each screen does, how insights are tested, and the honesty rules in the code. For the short version, see the [README](../README.md).
+
+## First run
+
+Nothing is tracked by default. A one-minute setup asks what you're working on (pornography, scrolling, gaming, gambling, alcohol, smoking, cannabis, binge eating, shopping, OCD compulsions) and offers suggestions for each layer, most relevant first; anything can be typed instead. The item editor keeps offering suggestions later. Suggested items reuse stable ids so data-driven lesson rules still work.
+
+## Beyond urges
+
+- **Look underneath.** After logging an urge, two optional questions: what was it promising (relief, escape, comfort, to feel wanted…) and what do you actually need (rest, connection, calm, meaning…). Then one small step toward that need, logged as a step.
+- **What you really need** (Plans): your most common needs, your own ways of meeting each one, and steps taken.
+- **Reflection every few days** (and the day after a setback): confidence, self-forgiveness, motivation, connection, stress, and what you've needed lately. Shown as trends on Progress → Insights.
+- These produce descriptive facts and trends only. "Days with a step had fewer urges" is *not* claimed: steps are usually logged right after urges, so that comparison would be confounded.
+
+## Theme
+
+Light by default, with a softer dark theme and a "match phone" option in Settings. Layer colours (indigo, amber, violet) and good/bad (green, red) are the same in both themes and were validated for colour-vision deficiency on both surfaces; setbacks also carry a hatch pattern so colour is never the only cue.
+
+## Screens
+
+| Tab | What it does |
+|---|---|
+| **Today** | Shows the 30-day clean rate as the headline, lifetime clean days, and the streak as a small chip. Below that:<br>• one forward target (beat your best, the next milestone, or the 66-day replacement habit)<br>• a risk-window warning when setbacks have clustered at this point before<br>• the check-in<br>• Log urge / Journal / Panic<br>• a lesson suggested by recent data |
+| **Log** | Logs an urge in three taps: intensity, outcome, save. Trigger, place and a note are optional. After saving it shows your resisted-urge count, this urge's intensity against your average, and the if-then plan for that trigger. An urge marked "acted on it" records a setback for that day and shows the lapse protocol first. |
+| **Progress** | • **Calendar** by layer, where tapping any day lets you view it or fill it in.<br>• **Insights**: ranked factors with strength labels, the 30-day rate trend per layer, and urge frequency, intensity and duration.<br>• **Urges**: a filtered list and an hour × weekday heatmap.<br>• **Timeline**: milestones, personal bests, and setbacks with what came before them. |
+| **Plans** | If-then plans linked to triggers, the lapse protocol (shown automatically after any setback), and the replacement habit. |
+| **Learn** | 23 short lessons with no order and nothing locked, grouped by topic. They cover the brain and dopamine, urges, habits, sleep and loneliness, setbacks and shame, compulsive sexual behaviour and OCD. Each lesson ends with the research behind it, and there is a **Further reading** library of 37 papers, books and talks. Every source was checked when added: DOIs against Crossref, free full texts through Europe PMC, and web pages by fetching them. |
+
+**Panic** is a full-screen urge-surfing timer. When the urge passes, it records how long it lasted: *"That one lasted 9 minutes. Your average is 13. You have ridden out 24 urges."*
+
+## Insights from day one, tested by simulation
+
+Early on, the app shows only what is true by construction: facts and trends such as urges resisted, when urges cluster, how long timed urges lasted, week-over-week changes, the weekly review, and milestones. Claims about *what goes with what* come later and carry a label: early signal, likely pattern, or clear pattern.
+
+These rules were tuned with a simulator. It plays eight synthetic users with known ground truth through the app's real logic for 180 days each, and measures what the app said and how often it was wrong. See [simulation-findings.md](simulation-findings.md) for what changed and why, and [simulation-report.md](simulation-report.md) for the numbers.
+
+```sh
+npm run sim                                    # rerun the simulation and rewrite the report
+npx tsx scripts/diary.ts improver 1 30         # what Today shows one synthetic user, day by day
+```
+
+## Honesty rules in the code
+
+- **The rate ignores unreported days, and coverage is shown next to it.** A 30-day rate counts only days you reported, so it could look better than it is if you skip bad days. The share of days reported is always displayed beside it.
+- **Patterns must survive a strict test.** About 22 comparisons are re-run every day, so the bar is high:
+  - setback comparisons need at least 8 days on each side, at least 5 setbacks, and |z| ≥ 3
+  - urge comparisons use a dispersion-corrected test at |z| ≥ 3
+  - every pattern must point the same way in both halves of the 60-day window
+- **Weak results are not shown as findings.** They appear only in a collapsed list of raw comparisons.
+- **The risk window is a hazard test.** It is flagged only when setbacks really are at least 2× more likely at that point.
+- **Low coverage gets a warning.** When fewer than 70% of days are reported, Today says the rate is probably flattering.
+- **The check-in is the only record of a setback.** Logging an urge as "acted on it" writes the setback into that day's check-in, so the urge log and the check-in can't disagree.
+- **Archiving never rewrites history.** Items that have been used can only be archived, not deleted.
+
+## Layout
+
+```
+src/
+  db/          Dexie schema, types, seed items, export/import, sample data
+  metrics/     all derived numbers as pure functions (rate, streaks, factors, risk window, timeline, feedback)
+  content/     lessons and the rules that suggest them
+  app/         data context, navigation, write actions
+  screens/     one file per screen; progress/ holds the four Progress tabs
+  ui/          shared components and icons
+  lib/         dates (with day-boundary offset), PIN hashing, WebAuthn
+```
+
+Entry values record whether the named thing *happened* that day, in every layer: for abstinence that means you did it, for a boundary that it was crossed, and for self care that it was done. `isHeld()` converts that into a good or bad outcome. All dates are local `YYYY-MM-DD` values, shifted by a configurable day boundary (default 04:00).

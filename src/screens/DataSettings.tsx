@@ -26,7 +26,7 @@ export function DataSettings({ onClose }: { onClose: () => void }) {
 
   async function doExport() {
     const file = await exportAll(db)
-    const name = `ledger-${data.today}.json`
+    const name = `freelay-${data.today}.json`
     const blob = new Blob([JSON.stringify(file, null, 2)], { type: 'application/json' })
     const f = new File([blob], name, { type: 'application/json' })
     try {

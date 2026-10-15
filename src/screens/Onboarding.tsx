@@ -52,10 +52,13 @@ export function Onboarding() {
   if (step === -1)
     return (
       <Shell>
-        <p className="text-[15px] text-muted">Welcome</p>
+        <p className="text-[15px] text-muted">Welcome to Freelay</p>
         <h1 className="mt-2 text-[30px] font-semibold leading-tight tracking-tight">A private place to track what you're changing.</h1>
         <p className="mt-4 leading-relaxed text-ink/85">
           Everything stays on this phone. No account, no server, nothing sent anywhere. Setup takes about a minute, and you can change everything later.
+        </p>
+        <p className="mt-3 text-[14px] leading-relaxed text-muted">
+          Because it lives only here, clearing your browser data or removing the app also erases it. Export a backup now and then (Settings → Data and backup).
         </p>
         <p className="mt-8 font-medium">What are you working on?</p>
         <p className="mt-1 text-[14px] text-muted">Optional. Only used to put the most relevant suggestions first.</p>

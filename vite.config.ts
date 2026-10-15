@@ -26,9 +26,9 @@ export default defineConfig({
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
       manifest: {
         // Deliberately neutral: nothing on the home screen says what this is.
-        name: 'Ledger',
-        short_name: 'Ledger',
-        description: 'A private daily ledger.',
+        name: 'Freelay',
+        short_name: 'Freelay',
+        description: 'A private daily tracker.',
         theme_color: '#121314',
         background_color: '#121314',
         display: 'standalone',
@@ -44,6 +44,8 @@ export default defineConfig({
       workbox: {
         // Precache everything the app needs; nothing is fetched at runtime.
         globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'],
+        // The link-preview image is for other sites, not the app; don't make every phone download it.
+        globIgnores: ['og-image.png'],
         navigateFallback: 'index.html',
         cleanupOutdatedCaches: true,
       },

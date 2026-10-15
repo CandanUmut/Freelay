@@ -36,6 +36,7 @@ export function Today() {
   const risk = riskText(riskWindow(s))
   const absIds = s.items.filter((i) => i.layer === 'abstinence').map((i) => i.id)
   const checkedIn = dayOutcome(data.dayByDate.get(today), absIds) !== undefined
+  const everReported = s.days.some((d) => dayOutcome(d, absIds) !== undefined)
   const yesterday = addDays(today, -1)
   const yesterdayMissing = s.days.length > 0 && dayOutcome(data.dayByDate.get(yesterday), absIds) === undefined
   const lastSetback = setbackDates(s).at(-1)
@@ -74,38 +75,48 @@ export function Today() {
         </button>
       </header>
 
-      <section className="mt-2">
-        <div className="flex items-end gap-3">
-          <span className={`text-[76px] font-semibold leading-none tracking-tight tabular-nums ${r30.rate === null ? 'text-muted/50' : ''}`}>{pct(r30.rate)}</span>
-          <span className="mb-2 rounded-full border border-line px-3 py-1 text-[14px] text-muted tabular-nums">
-            {st.current}d streak
-          </span>
-        </div>
-        <p className="mt-2 text-muted">
-          {r30.reported > 0 ? (
-            <>
-              clean over the last 30 days · {r30.clean} of {plural(r30.reported, 'reported day')}
-              {coverage < 0.9 && <>, {pct(coverage)} reported</>}
-              {coverage < 0.7 && r30.reported >= 7 && (
-                <span className="mt-1 block text-[14px]">
-                  With this many days missing, the rate is probably flattering: unrecorded days are often the harder ones. Missed days can be filled in from
-                  the calendar.
-                </span>
-              )}
-            </>
-          ) : (
-            'clean over the last 30 days · nothing reported yet'
-          )}
-        </p>
-        <p className="mt-3 text-lg">
-          <span className="font-semibold tabular-nums">{total}</span> clean {total === 1 ? 'day' : 'days'} in total
-        </p>
-        {urges30.total >= 3 && (
-          <p className="mt-1 text-lg">
-            <span className="font-semibold tabular-nums">{urges30.resisted}</span> of {urges30.total} urges resisted <span className="text-muted">this month</span>
+      {!everReported ? (
+        // Before the first check-in there are no numbers, so say hello instead of showing an empty rate.
+        <section className="mt-2">
+          <h1 className="text-[30px] font-semibold leading-tight tracking-tight">Welcome. Today is a good place to start.</h1>
+          <p className="mt-3 leading-relaxed text-muted">
+            Your numbers will show up here after your first check-in. It takes about 20 seconds, and there's nothing to live up to yet.
           </p>
-        )}
-      </section>
+        </section>
+      ) : (
+        <section className="mt-2">
+          <div className="flex items-end gap-3">
+            <span className={`text-[76px] font-semibold leading-none tracking-tight tabular-nums ${r30.rate === null ? 'text-muted/50' : ''}`}>{pct(r30.rate)}</span>
+            <span className="mb-2 rounded-full border border-line px-3 py-1 text-[14px] text-muted tabular-nums">
+              {st.current}d streak
+            </span>
+          </div>
+          <p className="mt-2 text-muted">
+            {r30.reported > 0 ? (
+              <>
+                clean over the last 30 days · {r30.clean} of {plural(r30.reported, 'reported day')}
+                {coverage < 0.9 && <>, {pct(coverage)} reported</>}
+                {coverage < 0.7 && r30.reported >= 7 && (
+                  <span className="mt-1 block text-[14px]">
+                    With this many days missing, the rate is probably flattering: unrecorded days are often the harder ones. Missed days can be filled in from
+                    the calendar.
+                  </span>
+                )}
+              </>
+            ) : (
+              'clean over the last 30 days · nothing reported yet'
+            )}
+          </p>
+          <p className="mt-3 text-lg">
+            <span className="font-semibold tabular-nums">{total}</span> clean {total === 1 ? 'day' : 'days'} in total
+          </p>
+          {urges30.total >= 3 && (
+            <p className="mt-1 text-lg">
+              <span className="font-semibold tabular-nums">{urges30.resisted}</span> of {urges30.total} urges resisted <span className="text-muted">this month</span>
+            </p>
+          )}
+        </section>
+      )}
 
       <Card className="mt-6">
         <Label>Next</Label>
