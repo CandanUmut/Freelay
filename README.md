@@ -76,4 +76,4 @@ build, publish `dist/`). One-time setup: **Settings → Pages → Build and depl
 
 ## License
 
-No license has been chosen yet, so for now the code is all rights reserved.
+MIT — see [LICENSE](LICENSE). Free to use, change and share.
